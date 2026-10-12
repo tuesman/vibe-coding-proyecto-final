@@ -1,65 +1,1575 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tutor Interactivo de Subredes y VLSM · Proyecto final</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Tutor de Subredes y VLSM</title>
 <style>
-  :root { --bg:#0B1020; --card:#151B2E; --text:#E8EBF3; --muted:#AAB2C5; --gold:#FFC629; --teal:#4FD6C4; }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font-family:Calibri, "Segoe UI", Arial, sans-serif; line-height:1.55; }
-  main { max-width:960px; margin:0 auto; padding:40px 16px 56px; }
-  .tag { color:var(--gold); font-weight:700; font-size:.85rem; letter-spacing:.04em; text-transform:uppercase; }
-  h1 { font-family:Georgia, Cambria, serif; font-weight:400; font-size:clamp(1.8rem,4vw,2.6rem); margin:.4em 0 .2em; }
-  h2 { font-family:Georgia, Cambria, serif; font-weight:400; font-size:1.4rem; margin:0 0 12px; }
-  .sub { color:var(--muted); margin:0 0 20px; }
-  .authors p { margin:2px 0; }
-  .ai { color:var(--gold); font-size:.9rem; margin:18px 0 32px; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr)); gap:24px; }
-  section { background:var(--card); border-radius:12px; padding:20px; }
-  video { width:100%; border-radius:8px; background:#000; display:block; }
-  ul { padding-left:20px; margin:12px 0 0; }
-  a { color:var(--teal); }
-  .links { margin-top:28px; }
-  footer { color:var(--muted); font-size:.85rem; margin-top:40px; }
+  :root{
+    --bg:#0e1720; --surface:#17232f; --surface-2:#1f2e3c; --border:#2b3c4d;
+    --text:#e7eef4; --muted:#8ba3b8;
+    --net:#4fd6c4; --net-dim:#1f4a45;
+    --host:#f2b84b; --host-dim:#4a3c1f;
+    --error:#ef6f6f; --error-dim:#3a1f1f;
+    --ok:#6bd18f; --ok-dim:#1f3a29;
+    --info:#7aa6ff; --info-dim:#1f2c4a;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    --sans:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+    padding:calc(28px + env(safe-area-inset-top,0px)) 20px calc(60px + env(safe-area-inset-bottom,0px));}
+  .wrap{max-width:1040px;margin:0 auto;}
+  header h1{font-size:1.5rem;font-weight:650;margin:0 0 6px;letter-spacing:-0.01em;}
+  header p{margin:0;color:var(--muted);font-size:0.92rem;line-height:1.5;max-width:70ch;}
+
+  .mode-tabs{display:flex;gap:4px;margin:20px 0 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .mode-tab{background:none;border:none;color:var(--muted);font-size:0.95rem;font-weight:600;
+    padding:10px 4px;cursor:pointer;border-bottom:2px solid transparent;margin-right:20px;}
+  .mode-tab.active{color:var(--net);border-bottom-color:var(--net);}
+  .mode-panel{display:none;} .mode-panel.active{display:block;}
+
+  .sub-tabs{display:flex;gap:8px;margin-bottom:16px;}
+  .sub-tab{background:var(--surface-2);border:1px solid var(--border);color:var(--muted);
+    padding:8px 14px;border-radius:7px;font-size:0.85rem;font-weight:600;cursor:pointer;}
+  .sub-tab.active{background:var(--net-dim);border-color:var(--net);color:var(--net);}
+  .sub-panel{display:none;} .sub-panel.active{display:block;}
+
+  .grid{display:grid;grid-template-columns:300px 1fr;gap:18px;}
+  @media (max-width:760px){.grid{grid-template-columns:1fr;}}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:18px;}
+  .panel h2{font-size:0.78rem;color:var(--muted);font-weight:600;margin:0 0 12px;}
+
+  label{display:block;font-size:0.82rem;color:var(--muted);margin-bottom:5px;}
+  input[type=text],input[type=number]{width:100%;background:var(--surface-2);border:1px solid var(--border);
+    color:var(--text);font-family:var(--mono);font-size:0.95rem;padding:8px 10px;border-radius:7px;}
+  input:focus{outline:2px solid var(--net);outline-offset:1px;}
+  input.field-ok{border-color:var(--ok);background:var(--ok-dim);}
+  input.field-bad{border-color:var(--error);background:var(--error-dim);}
+
+  .prefix-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  input[type=range]{flex:1;accent-color:var(--net);}
+  .prefix-val{font-family:var(--mono);background:var(--surface-2);border:1px solid var(--border);border-radius:6px;
+    padding:6px 10px;min-width:52px;text-align:center;font-size:0.92rem;}
+
+  button.primary{width:100%;background:var(--net);color:#052622;border:none;font-weight:650;font-size:0.92rem;
+    padding:10px;border-radius:7px;cursor:pointer;}
+  button.primary:hover{opacity:0.92;}
+  button.secondary{background:var(--surface-2);border:1px solid var(--border);color:var(--text);font-size:0.85rem;
+    padding:9px 12px;border-radius:7px;cursor:pointer;}
+  button.secondary:hover{border-color:var(--net);}
+  select{background:var(--surface-2);border:1px solid var(--border);color:var(--text);font-size:0.85rem;
+    padding:8px 10px;border-radius:7px;font-family:var(--sans);}
+
+  .error-box{display:none;background:#2a1414;border:1px solid var(--error);color:#ffb3b3;padding:9px 10px;
+    border-radius:7px;font-size:0.82rem;margin-top:10px;}
+  .examples-note{font-size:0.74rem;color:var(--muted);margin-top:14px;line-height:1.5;}
+
+  .result-summary{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px;}
+  .stat{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
+  .stat .k{font-size:0.7rem;color:var(--muted);margin-bottom:3px;}
+  .stat .v{font-family:var(--mono);font-size:0.98rem;}
+  .stat .v.net{color:var(--net);} .stat .v.host{color:var(--host);}
+
+  .steps-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+  .steps-header h2{margin:0;}
+  .step-controls{display:flex;gap:8px;}
+  .step-btn{background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:6px 12px;
+    border-radius:6px;font-size:0.8rem;cursor:pointer;}
+  .step-btn:hover{border-color:var(--net);} .step-btn:disabled{opacity:0.35;cursor:default;}
+  .step-dots{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap;}
+  .step-dot{width:22px;height:22px;border-radius:5px;border:1px solid var(--border);background:var(--surface-2);
+    color:var(--muted);font-family:var(--mono);font-size:0.65rem;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .step-dot.active{background:var(--net);color:#052622;border-color:var(--net);font-weight:650;}
+  .step{border:1px solid var(--border);border-radius:8px;padding:13px 14px;margin-bottom:10px;background:var(--surface-2);display:none;}
+  .step.visible{display:block;}
+  .step .step-num{font-size:0.68rem;color:var(--muted);font-weight:650;margin-bottom:6px;}
+  .step .step-text{font-size:0.86rem;line-height:1.55;margin-bottom:10px;color:#d7e2ea;}
+  .step .step-text b{color:var(--text);}
+  .step .step-text code{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 5px;
+    font-family:var(--mono);color:var(--net);font-size:0.82rem;}
+
+  .bits{display:flex;flex-wrap:wrap;gap:3px;font-family:var(--mono);font-size:0.78rem;}
+  .octet-group{display:flex;gap:2px;margin-right:8px;}
+  .bit{width:20px;height:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:3px;
+    background:var(--host-dim);color:#b8bfc6;border:1px dashed #5a5348;font-family:var(--mono);padding:0;margin:0;line-height:1;}
+  .bit.net{background:var(--net-dim);color:var(--net);font-weight:650;border:1px solid var(--net);}
+  .bit.hostbit{background:var(--host-dim);color:var(--host);font-weight:650;border:1px dashed var(--host);}
+  .bit .bit-tag{font-size:0.5rem;opacity:0.75;margin-top:1px;letter-spacing:0;}
+  .bit.clickable{cursor:pointer;user-select:none;}
+  .bit.clickable:hover{outline:1px solid var(--text);}
+  button.bit{font-size:0.78rem;-webkit-appearance:none;appearance:none;}
+  button.bit:focus-visible, .mode-tab:focus-visible, .sub-tab:focus-visible, .level-tab:focus-visible,
+  .step-dot:focus-visible, .mc-option:focus-visible, button.secondary:focus-visible, button.primary:focus-visible{
+    outline:2px solid var(--net);outline-offset:2px;
+  }
+  @media (max-width:600px){
+    .bit{width:30px;height:36px;}
+    button.bit{font-size:0.85rem;}
+  }
+  .bits-legend{font-size:0.72rem;color:var(--muted);margin-top:5px;}
+  .dotted{font-family:var(--mono);font-size:0.9rem;color:var(--muted);margin-top:6px;}
+  .dotted b{color:var(--text);}
+
+  footer{margin-top:20px;font-size:0.76rem;color:var(--muted);line-height:1.5;}
+  .legend{display:flex;gap:16px;margin-top:4px;flex-wrap:wrap;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:11px;height:11px;border-radius:2px;display:inline-block;}
+
+  /* concepts */
+  .concept-card{margin-bottom:16px;}
+  .concept-card h2{font-size:1.02rem;margin:0 0 8px;color:var(--text);}
+  .concept-card p{font-size:0.9rem;line-height:1.65;color:#c7d2db;margin:0 0 10px;}
+  .concept-card p:last-child{margin-bottom:0;}
+  .mini-table{width:100%;border-collapse:collapse;font-size:0.82rem;margin-top:8px;}
+  .mini-table th{text-align:left;color:var(--muted);font-size:0.7rem;padding:5px 8px;border-bottom:1px solid var(--border);}
+  .mini-table td{padding:6px 8px;border-bottom:1px solid var(--border);font-family:var(--mono);}
+
+  /* practice */
+  .level-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .level-tab{background:var(--surface-2);border:1px solid var(--border);color:var(--muted);padding:8px 14px;
+    border-radius:7px;font-size:0.85rem;font-weight:600;cursor:pointer;}
+  .level-tab.active{background:var(--net-dim);border-color:var(--net);color:var(--net);}
+  .level-panel{display:none;} .level-panel.active{display:block;}
+
+  .practice-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
+  .score-badge{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border);
+    border-radius:20px;padding:6px 14px;font-family:var(--mono);font-size:0.85rem;color:var(--host);}
+
+  .seed-row{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+  .seed-row input{width:120px;flex:none;}
+  .seed-row .lbl{font-size:0.78rem;color:var(--muted);}
+
+  .exercise-box{background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:16px;margin-bottom:14px;}
+  .exercise-prompt{font-size:0.94rem;line-height:1.6;color:var(--text);margin-bottom:14px;}
+  .exercise-prompt b{color:var(--net);}
+  .exercise-tag{display:inline-block;font-size:0.68rem;color:var(--muted);border:1px solid var(--border);
+    border-radius:4px;padding:2px 7px;margin-bottom:10px;}
+
+  .field-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
+  @media (max-width:560px){.field-grid{grid-template-columns:1fr;}}
+  .field-item label{margin-bottom:4px;}
+  .field-msg{font-size:0.74rem;margin-top:3px;min-height:14px;}
+  .field-msg.bad{color:var(--error);} .field-msg.ok{color:var(--ok);}
+
+  .vlsm-table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:0.85rem;}
+  .vlsm-table th{text-align:left;font-size:0.68rem;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border);}
+  .vlsm-table td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  .vlsm-table td.name{font-weight:600;white-space:nowrap;}
+  .vlsm-table input{padding:6px 8px;font-size:0.85rem;}
+
+  .mc-options{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+  .mc-option{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--border);
+    border-radius:7px;padding:9px 12px;cursor:pointer;font-size:0.88rem;}
+  .mc-option:hover{border-color:var(--net);}
+  .mc-option.selected{border-color:var(--net);background:var(--net-dim);}
+  .mc-option.correct{border-color:var(--ok);background:var(--ok-dim);}
+  .mc-option.incorrect{border-color:var(--error);background:var(--error-dim);}
+  .mc-option input{width:auto;}
+
+  .action-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
+  .action-row button{width:auto;padding:9px 16px;}
+
+  .feedback-banner{display:none;border-radius:8px;padding:10px 13px;font-size:0.86rem;margin-bottom:14px;line-height:1.5;}
+  .feedback-banner.ok{display:block;background:var(--ok-dim);border:1px solid var(--ok);color:#b7f0c9;}
+  .feedback-banner.bad{display:block;background:var(--error-dim);border:1px solid var(--error);color:#ffc2c2;}
+
+  .hint-banner{display:none;background:var(--info-dim);border:1px solid var(--info);color:#c9d8ff;
+    border-radius:8px;padding:9px 13px;font-size:0.85rem;margin-bottom:14px;line-height:1.5;}
+  .hint-banner.visible{display:block;}
+
+  .nudge-banner{display:none;background:#2a2416;border:1px solid var(--host);color:#f3dca0;border-radius:8px;
+    padding:10px 13px;font-size:0.85rem;margin-bottom:14px;line-height:1.5;justify-content:space-between;
+    align-items:center;gap:10px;flex-wrap:wrap;}
+  .nudge-banner.visible{display:flex;}
+  .nudge-banner button{width:auto;padding:7px 12px;font-size:0.8rem;}
+
+  .concept-link-banner{display:none;background:var(--info-dim);border:1px solid var(--info);color:#c9d8ff;
+    border-radius:8px;padding:9px 13px;font-size:0.85rem;margin-bottom:14px;line-height:1.5;}
+  .concept-link-banner.visible{display:block;}
+  .concept-link-banner a{color:#fff;font-weight:650;cursor:pointer;text-decoration:underline;}
+
+  .reveal-table{width:100%;border-collapse:collapse;font-size:0.85rem;margin-bottom:10px;}
+  .reveal-table td{padding:6px 8px;border-bottom:1px solid var(--border);}
+  .reveal-table td.k{color:var(--muted);width:40%;}
+  .reveal-table td.v{font-family:var(--mono);color:var(--text);}
+
+  .summary-panel{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:8px;}
+  @media (max-width:560px){.summary-panel{grid-template-columns:1fr;}}
+  .summary-card{background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:14px;}
+  .summary-card .t{font-size:0.78rem;color:var(--muted);margin-bottom:6px;}
+  .summary-card .n{font-family:var(--mono);font-size:1.3rem;color:var(--net);}
+  .summary-card .sub{font-size:0.76rem;color:var(--muted);margin-top:2px;}
 </style>
 </head>
 <body>
-<main>
-  <div class="tag">Proyecto final · Final project · Vibe Coding CEDIA 2026</div>
-  <h1>Tutor Interactivo de Subredes y VLSM</h1>
-  <p class="sub">Interactive Subnetting and VLSM Tutor · Guía de proyecto 18 · Project guide 18</p>
-  <div class="authors">
-    <p><strong>Wilson Fernando Guerrero Álvarez</strong> · Universidad UTE · Facultad de Ciencias de la Ingeniería e Industrias</p>
-    <p><strong>Tuesman Daniel Castillo Calvas</strong> · UTPL · Facultad de Ingenierías y Arquitectura</p>
-  </div>
-  <p class="ai">Narración generada con voz de IA (ElevenLabs) y revisada por los autores.<br>
-     Narration generated with an AI voice (ElevenLabs) and reviewed by the authors.</p>
+<div class="wrap">
 
-  <div class="grid">
-    <section lang="es">
-      <h2>Video en español</h2>
-      <video controls preload="metadata" src="VC-2026-015-022_ProyectoFinal_ES.mp4"></video>
-      <ul>
-        <li><a href="VC-2026-015-022_ProyectoFinal_ES.mp4">Descargar video (MP4)</a></li>
-        <li><a href="VC-2026-015-022_ProyectoFinal_ES.pptx">Presentación (PPTX)</a></li>
-      </ul>
-    </section>
-    <section lang="en">
-      <h2>Video in English</h2>
-      <video controls preload="metadata" src="VC-2026-015-022_ProyectoFinal_EN.mp4"></video>
-      <ul>
-        <li><a href="VC-2026-015-022_ProyectoFinal_EN.mp4">Download video (MP4)</a></li>
-        <li><a href="VC-2026-015-022_ProyectoFinal_EN.pptx">Slides (PPTX)</a></li>
-      </ul>
-    </section>
+  <header>
+    <h1 id="hdrTitle">Tutor de Subredes y VLSM</h1>
+    <p id="hdrDesc">Repasa los conceptos, usa la calculadora paso a paso cuando la necesites, y practica en tres niveles con corrección inmediata. Tu progreso se guarda automáticamente en este navegador.</p>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+      <button class="secondary" id="langToggleBtn" onclick="toggleLang()" aria-label="Cambiar idioma / Switch language">🌐 EN</button>
+      <button class="secondary" id="soundToggleBtn" onclick="toggleSound()" aria-pressed="false" aria-label="Activar o desactivar voz / Turn voice on or off">🔇</button>
+    </div>
+  </header>
+
+  <div class="mode-tabs" role="tablist" aria-label="Secciones del tutor">
+    <button class="mode-tab active" id="tabConceptsBtn" role="tab" aria-selected="true" aria-controls="panelConcepts" onclick="switchMode('concepts')">Conceptos</button>
+    <button class="mode-tab" id="tabCalcBtn" role="tab" aria-selected="false" aria-controls="panelCalc" onclick="switchMode('calc')">Calculadora</button>
+    <button class="mode-tab" id="tabPracticeBtn" role="tab" aria-selected="false" aria-controls="panelPractice" onclick="switchMode('practice')">Practicar</button>
   </div>
 
-  <div class="links">
-    <p><a href="VC-2026-015-022_NotaMetodologica.docx">Nota metodológica · Methods note (DOCX)</a></p>
-    <p><a href="https://tuesman.github.io/tutor-vlsm/">Probar el tutor · Try the tutor</a></p>
+  <!-- ======================= CONCEPTOS ======================= -->
+  <div class="mode-panel active" id="panelConcepts" role="tabpanel" aria-labelledby="tabConceptsBtn">
+
+    <div class="panel" id="explorerPanel">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px;">
+        <h2 id="explorerTitle" style="margin:0;">Explorador de bits — pruébalo</h2>
+        <button class="secondary" onclick="speakConcept('explorerPanel')" title="Escuchar">🔊</button>
+      </div>
+      <p id="explorerDesc" style="font-size:0.86rem;color:#c7d2db;line-height:1.6;margin-top:0;">Haz clic en cualquier bit para cambiarlo entre 0 y 1, y mueve el prefijo. Verás en vivo cómo cambian la IP, la red y el broadcast.</p>
+      <div id="explorerBits"></div>
+      <div class="prefix-row" style="margin-top:14px;">
+        <label style="margin:0;white-space:nowrap;"><span id="explorerPrefixWord">Prefijo:</span> <span id="explorerPrefixLabel">/24</span></label>
+        <input type="range" id="explorerPrefix" min="1" max="30" value="24">
+      </div>
+      <div class="result-summary" style="margin-top:14px;">
+        <div class="stat"><div class="k" id="explLbl1">Dirección (decimal)</div><div class="v net" id="explorerIpOut">—</div></div>
+        <div class="stat"><div class="k" id="explLbl2">Dirección de red</div><div class="v" id="explorerNetOut">—</div></div>
+        <div class="stat"><div class="k" id="explLbl3">Broadcast</div><div class="v" id="explorerBcastOut">—</div></div>
+        <div class="stat"><div class="k" id="explLbl4">Hosts utilizables</div><div class="v host" id="explorerHostsOut">—</div></div>
+      </div>
+    </div>
+
+    <div class="panel concept-card" id="concept-ip">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;"><h2 id="ciTitle" style="margin:0;">1. ¿Qué es una dirección IP?</h2><button class="secondary" onclick="speakConcept('concept-ip')" title="Escuchar">🔊</button></div>
+      <p id="ciP1">Una dirección IPv4 son <b>32 bits</b> agrupados en 4 octetos de 8 bits, escritos en decimal separados por puntos (ej. <code>192.168.1.10</code>). Cada octeto va de 0 a 255 porque 8 bits solo pueden representar 256 valores distintos.</p>
+      <p id="ciP2">Prueba cambiar bits en el explorador de arriba y observa cómo el número decimal de ese octeto cambia — el bit más a la izquierda de cada octeto vale 128, el siguiente 64, y así sucesivamente hasta 1.</p>
+    </div>
+
+    <div class="panel concept-card" id="concept-mask">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;"><h2 id="cmTitle" style="margin:0;">2. ¿Qué hace la máscara de subred?</h2><button class="secondary" onclick="speakConcept('concept-mask')" title="Escuchar">🔊</button></div>
+      <p id="cmP1">El prefijo (ej. <code>/24</code>) le dice a la red cuántos de esos 32 bits identifican la <b>red</b> (no cambian dentro de la subred) y cuántos identifican el <b>host</b> (varían entre dispositivos).</p>
+      <p id="cmP2">Mueve el control de prefijo en el explorador: la línea entre verde (red) y ámbar (host) se desplaza, y verás cómo se recalculan la red y el broadcast al instante — sin cambiar la IP, solo cambiando dónde "corta" la máscara.</p>
+    </div>
+
+    <div class="panel concept-card" id="concept-and">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;"><h2 id="caTitle" style="margin:0;">3. El AND lógico bit a bit</h2><button class="secondary" onclick="speakConcept('concept-and')" title="Escuchar">🔊</button></div>
+      <p id="caP1">Para obtener la dirección de red, la IP y la máscara se combinan con un <b>AND</b>: si ambos bits son 1, el resultado es 1; en cualquier otro caso, es 0. En la práctica esto significa "conservar los bits de red tal cual, y poner todos los bits de host en 0".</p>
+      <p id="caP2">Ejemplo: con <code>192.168.10.130 /26</code>, los últimos 6 bits del cuarto octeto se ponen en 0, y <code>130</code> (10000010) se convierte en <code>128</code> (10000000) → la red es <code>192.168.10.128</code>.</p>
+    </div>
+
+    <div class="panel concept-card" id="concept-vlsm">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;"><h2 id="cvTitle" style="margin:0;">4. ¿Por qué existe VLSM?</h2><button class="secondary" onclick="speakConcept('concept-vlsm')" title="Escuchar">🔊</button></div>
+      <p id="cvP1">Sin VLSM, si divides una red en subredes de tamaño fijo, todas deben ser del mismo tamaño — el necesario para la subred más grande. Eso desperdicia direcciones en las subredes pequeñas.</p>
+      <table class="mini-table" id="cvTable"></table>
+      <p id="cvP2" style="margin-top:10px;">Con tamaño fijo se gastan 192 direcciones; con VLSM, solo 100 — el resto queda libre para crecer. Esa es la idea central: <b>cada subred recibe solo el espacio que realmente necesita</b>.</p>
+    </div>
+
   </div>
-  <footer>Curso Vibe Coding CEDIA 2026 · Universidad UTE · UTPL · Uso educativo · Educational use.</footer>
-</main>
+
+  <!-- ======================= CALCULADORA ======================= -->
+  <div class="mode-panel" id="panelCalc" role="tabpanel" aria-labelledby="tabCalcBtn">
+    <div class="sub-tabs" role="tablist" aria-label="Tipo de calculadora">
+      <button class="sub-tab active" id="calcSubBtnSimple" role="tab" aria-selected="true" aria-controls="calcPanelSimple" onclick="switchCalcSub('simple')">Subnetting simple</button>
+      <button class="sub-tab" id="calcSubBtnVlsm" role="tab" aria-selected="false" aria-controls="calcPanelVlsm" onclick="switchCalcSub('vlsm')">VLSM</button>
+    </div>
+
+    <!-- Subnetting simple -->
+    <div class="sub-panel active" id="calcPanelSimple" role="tabpanel" aria-labelledby="calcSubBtnSimple">
+      <div class="grid">
+        <div class="panel">
+          <h2 id="simEntradaTitle">Entrada</h2>
+          <label for="ipInput" id="simIpLabel">Dirección IP</label>
+          <input type="text" id="ipInput" value="192.168.10.130" placeholder="ej. 192.168.1.10">
+          <label for="prefixRange"><span id="simPrefixWord">Prefijo CIDR:</span> <span id="prefixLabel"></span></label>
+          <div class="prefix-row">
+            <input type="range" id="prefixRange" min="1" max="30" value="26">
+            <div class="prefix-val" id="prefixVal">/26</div>
+          </div>
+          <button class="primary" id="btnCalcular" onclick="calcularLearn()">Calcular</button>
+          <div class="error-box" id="errorBox" role="alert" aria-live="assertive"></div>
+          <div class="examples-note">
+            <button class="secondary" id="exBtn1" style="width:100%;margin-bottom:6px;" onclick="cargarEjemplo('192.168.10.130','26')">192.168.10.130 /26 — clase C subdividida</button>
+            <button class="secondary" id="exBtn2" style="width:100%;margin-bottom:6px;" onclick="cargarEjemplo('10.0.5.200','22')">10.0.5.200 /22 — subred grande</button>
+            <button class="secondary" id="exBtn3" style="width:100%;" onclick="cargarEjemplo('172.16.50.10','30')">172.16.50.10 /30 — enlace punto a punto</button>
+          </div>
+        </div>
+        <div class="panel">
+          <h2 id="simResultTitle">Resultado</h2>
+          <div class="result-summary" id="summary"></div>
+          <div class="steps-header">
+            <h2 style="margin:0;" id="stepsHeaderL">Explicación paso a paso</h2>
+            <div class="step-controls">
+              <button class="step-btn" id="prevBtnL" onclick="learnStepper.prev()">← Anterior</button>
+              <button class="step-btn" id="nextBtnL" onclick="learnStepper.next()">Siguiente paso →</button>
+            </div>
+          </div>
+          <div class="step-dots" id="dotsL"></div>
+          <div id="stepsContainerL"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VLSM -->
+    <div class="sub-panel" id="calcPanelVlsm" role="tabpanel" aria-labelledby="calcSubBtnVlsm">
+      <div class="grid">
+        <div class="panel">
+          <h2 id="vlsmRedBaseTitle">Red base</h2>
+          <div class="prefix-row">
+            <input type="text" id="baseIp" value="192.168.1.0" placeholder="ej. 192.168.1.0">
+            <input type="text" style="width:74px;" id="basePrefix" value="24" placeholder="/24">
+          </div>
+          <h2 id="vlsmSubredesTitle">Subredes requeridas</h2>
+          <div id="subnetList"></div>
+          <button class="secondary" id="btnAgregarSubred" style="width:100%;margin-top:4px;" onclick="addSubnetRow()">+ Agregar subred</button>
+          <button class="primary" id="btnCalcularVlsm" onclick="calcularVLSM()">Calcular VLSM</button>
+          <div class="error-box" id="vlsmErrorBox" role="alert" aria-live="assertive"></div>
+        </div>
+        <div class="panel">
+          <h2 id="vlsmMapaTitle">Mapa de asignación del espacio de direcciones</h2>
+          <div id="spaceBar" style="display:flex;width:100%;height:34px;border-radius:7px;overflow:hidden;border:1px solid var(--border);margin-bottom:8px;"></div>
+          <div id="spaceLegend" style="display:flex;flex-wrap:wrap;gap:10px;font-size:0.72rem;color:var(--muted);margin-bottom:6px;"></div>
+          <h2 id="vlsmTablaTitle" style="margin-top:16px;">Tabla de subredes asignadas</h2>
+          <div style="overflow-x:auto;">
+            <table class="vlsm-table">
+              <thead><tr id="vlsmTheadRow"></tr></thead>
+              <tbody id="vlsmResultBody"></tbody>
+            </table>
+          </div>
+          <div class="dotted" id="vlsmSummaryNote" style="margin-top:10px;"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="steps-header">
+          <h2 style="margin:0;" id="stepsHeaderV">Explicación paso a paso</h2>
+          <div class="step-controls">
+            <button class="step-btn" id="prevBtnV" onclick="vlsmStepper.prev()">← Anterior</button>
+            <button class="step-btn" id="nextBtnV" onclick="vlsmStepper.next()">Siguiente paso →</button>
+          </div>
+        </div>
+        <div class="step-dots" id="dotsV"></div>
+        <div id="stepsContainerV"></div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="legend">
+        <span><span class="swatch" style="background:var(--net-dim);border:1px solid var(--net);"></span><span id="legendNet">bit / bloque de red</span></span>
+        <span><span class="swatch" style="background:var(--host-dim);border:1px solid var(--host);"></span><span id="legendHost">bit / bloque de host</span></span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ======================= PRACTICAR ======================= -->
+  <div class="mode-panel" id="panelPractice" role="tabpanel" aria-labelledby="tabPracticeBtn">
+
+    <div class="level-tabs" role="tablist" aria-label="Nivel de práctica">
+      <button class="level-tab active" id="levelTabBasico" role="tab" aria-selected="true" aria-controls="levelBasico" onclick="switchLevel('basico')">Básico</button>
+      <button class="level-tab" id="levelTabIntermedio" role="tab" aria-selected="false" aria-controls="levelIntermedio" onclick="switchLevel('intermedio')">Intermedio</button>
+      <button class="level-tab" id="levelTabAvanzado" role="tab" aria-selected="false" aria-controls="levelAvanzado" onclick="switchLevel('avanzado')">Avanzado</button>
+    </div>
+
+    <div class="practice-toolbar">
+      <label style="margin:0;" for="focusFilter" id="focusLabel">Enfoque:</label>
+      <select id="focusFilter" onchange="onFocusChange()">
+        <option value="todo" id="optTodo">Todo</option>
+        <option value="subnetting" id="optSubnetting">Solo subnetting</option>
+        <option value="vlsm" id="optVlsm">Solo VLSM</option>
+      </select>
+      <span style="flex:1;"></span>
+      <button class="secondary" id="btnProgress" onclick="toggleSummary()">📊 Tu progreso hoy</button>
+    </div>
+
+    <div class="panel" id="summaryPanel" style="display:none;">
+      <h2 id="summaryTitle">Tu progreso hoy</h2>
+      <div class="summary-panel" id="summaryContent"></div>
+    </div>
+
+    <!-- BÁSICO -->
+    <div class="level-panel active" id="levelBasico" role="tabpanel" aria-labelledby="levelTabBasico">
+      <div class="panel">
+        <div class="seed-row">
+          <span class="lbl" id="seedLabelBasico">Semilla:</span>
+          <input type="text" id="seedBasico" value="">
+          <button class="secondary" id="btnRandBasico" onclick="newExercise('basico', true)">🔀 Aleatorio</button>
+          <button class="secondary" id="btnGenBasico" onclick="newExercise('basico', false)">▶ Generar</button>
+          <span style="flex:1;"></span>
+          <span class="score-badge" id="scoreBasico">Aciertos: 0 / 0</span>
+        </div>
+        <div class="nudge-banner" id="nudgeBasico">
+          <span id="nudgeTextBasico">🔥 Vas muy bien en Básico — ¿probamos Intermedio?</span>
+          <button class="secondary" id="nudgeBtnBasico" onclick="switchLevel('intermedio'); dismissNudge('basico');">Ir a Intermedio</button>
+        </div>
+        <div class="concept-link-banner" id="conceptLinkBasico"></div>
+        <div class="exercise-box" id="exerciseBoxBasico"></div>
+        <div class="hint-banner" id="hintBasico" role="status" aria-live="polite"></div>
+        <div class="feedback-banner" id="feedbackBasico" role="status" aria-live="polite"></div>
+        <div class="action-row">
+          <button class="secondary" id="btnVerificarBasico" onclick="verifyExercise('basico')">Verificar</button>
+          <button class="secondary" id="btnPistaBasico" onclick="showHint('basico')">💡 Pista</button>
+          <button class="secondary" id="explainBtnBasico" style="display:none;" onclick="showExplanation('basico')">Ver explicación paso a paso</button>
+          <button class="secondary" id="btnSpeakBasico" onclick="speakExercise('basico')" title="Escuchar">🔊</button>
+        </div>
+        <div id="explainAreaBasico" style="margin-top:16px;"></div>
+      </div>
+    </div>
+
+    <!-- INTERMEDIO -->
+    <div class="level-panel" id="levelIntermedio" role="tabpanel" aria-labelledby="levelTabIntermedio">
+      <div class="panel">
+        <div class="seed-row">
+          <span class="lbl" id="seedLabelIntermedio">Semilla:</span>
+          <input type="text" id="seedIntermedio" value="">
+          <button class="secondary" id="btnRandIntermedio" onclick="newExercise('intermedio', true)">🔀 Aleatorio</button>
+          <button class="secondary" id="btnGenIntermedio" onclick="newExercise('intermedio', false)">▶ Generar</button>
+          <span style="flex:1;"></span>
+          <span class="score-badge" id="scoreIntermedio">Aciertos: 0 / 0</span>
+        </div>
+        <div class="nudge-banner" id="nudgeIntermedio">
+          <span id="nudgeTextIntermedio">🔥 Vas muy bien en Intermedio — ¿probamos Avanzado?</span>
+          <button class="secondary" id="nudgeBtnIntermedio" onclick="switchLevel('avanzado'); dismissNudge('intermedio');">Ir a Avanzado</button>
+        </div>
+        <div class="concept-link-banner" id="conceptLinkIntermedio"></div>
+        <div class="exercise-box" id="exerciseBoxIntermedio"></div>
+        <div class="hint-banner" id="hintIntermedio" role="status" aria-live="polite"></div>
+        <div class="feedback-banner" id="feedbackIntermedio" role="status" aria-live="polite"></div>
+        <div class="action-row">
+          <button class="secondary" id="btnVerificarIntermedio" onclick="verifyExercise('intermedio')">Verificar</button>
+          <button class="secondary" id="btnPistaIntermedio" onclick="showHint('intermedio')">💡 Pista</button>
+          <button class="secondary" id="explainBtnIntermedio" style="display:none;" onclick="showExplanation('intermedio')">Ver explicación paso a paso</button>
+          <button class="secondary" id="btnSpeakIntermedio" onclick="speakExercise('intermedio')" title="Escuchar">🔊</button>
+        </div>
+        <div id="explainAreaIntermedio" style="margin-top:16px;"></div>
+      </div>
+    </div>
+
+    <!-- AVANZADO -->
+    <div class="level-panel" id="levelAvanzado" role="tabpanel" aria-labelledby="levelTabAvanzado">
+      <div class="panel">
+        <div class="seed-row">
+          <span class="lbl" id="seedLabelAvanzado">Semilla:</span>
+          <input type="text" id="seedAvanzado" value="">
+          <button class="secondary" id="btnRandAvanzado" onclick="newExercise('avanzado', true)">🔀 Aleatorio</button>
+          <button class="secondary" id="btnGenAvanzado" onclick="newExercise('avanzado', false)">▶ Generar</button>
+          <span style="flex:1;"></span>
+          <span class="score-badge" id="scoreAvanzado">Aciertos: 0 / 0</span>
+        </div>
+        <div class="concept-link-banner" id="conceptLinkAvanzado"></div>
+        <div class="exercise-box" id="exerciseBoxAvanzado"></div>
+        <div class="hint-banner" id="hintAvanzado" role="status" aria-live="polite"></div>
+        <div class="feedback-banner" id="feedbackAvanzado" role="status" aria-live="polite"></div>
+        <div class="action-row">
+          <button class="secondary" id="btnVerificarAvanzado" onclick="verifyExercise('avanzado')">Verificar</button>
+          <button class="secondary" id="btnPistaAvanzado" onclick="showHint('avanzado')">💡 Pista</button>
+          <button class="secondary" id="explainBtnAvanzado" style="display:none;" onclick="showExplanation('avanzado')">Ver explicación paso a paso</button>
+          <button class="secondary" id="btnSpeakAvanzado" onclick="speakExercise('avanzado')" title="Escuchar">🔊</button>
+        </div>
+        <div id="explainAreaAvanzado" style="margin-top:16px;"></div>
+      </div>
+    </div>
+
+    <footer id="practiceFooterNote">
+      El progreso (aciertos/intentos por nivel y tema) se guarda en este navegador y persiste entre sesiones. La semilla te permite repetir exactamente el mismo ejercicio.
+    </footer>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   IDIOMA Y AUDIO
+   ============================================================ */
+const PREFS_KEY = 'tutorRedesVLSM_prefs';
+let currentLang = 'es';
+let soundOn = false;
+try{
+  const rawPrefs = localStorage.getItem(PREFS_KEY);
+  if(rawPrefs){
+    const p = JSON.parse(rawPrefs);
+    if(p.lang === 'es' || p.lang === 'en') currentLang = p.lang;
+    if(typeof p.sound === 'boolean') soundOn = p.sound;
+  }
+}catch(e){}
+function savePrefs(){ try{ localStorage.setItem(PREFS_KEY, JSON.stringify({lang:currentLang, sound:soundOn})); }catch(e){} }
+
+function L(es, en){ return currentLang === 'en' ? en : es; }
+function fmtNum(n){ return n.toLocaleString(currentLang==='en' ? 'en-US' : 'es'); }
+function stripHtml(html){ return String(html).replace(/<[^>]+>/g, ' ').replace(/\s+/g,' ').trim(); }
+
+function speak(text){
+  if(!soundOn) return;
+  try{
+    window.speechSynthesis.cancel();
+    if(typeof currentClipAudio !== 'undefined' && currentClipAudio){ currentClipAudio.pause(); }
+    const u = new SpeechSynthesisUtterance(stripHtml(text));
+    u.lang = currentLang === 'en' ? 'en-US' : 'es-ES';
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+function speakExercise(level){
+  const text = (typeof promptText !== 'undefined' && promptText[level]) ? promptText[level] : '';
+  if(!text) return;
+  try{
+    window.speechSynthesis.cancel();
+    if(typeof currentClipAudio !== 'undefined' && currentClipAudio){ currentClipAudio.pause(); }
+    const u = new SpeechSynthesisUtterance(stripHtml(text));
+    u.lang = currentLang === 'en' ? 'en-US' : 'es-ES';
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+/* ============================================================
+   CLIPS DE AUDIO PREGRABADOS (ElevenLabs, subidos por el usuario)
+   Textos fijos (Conceptos, explorador, feedback, pistas). Los
+   enunciados de ejercicios siguen usando la voz del navegador
+   porque cambian en cada intento.
+   ============================================================ */
+const AUDIO_CLIPS = {
+  concept_and:        { es:'audio/es_concept_and.mp3', en:'audio/en_concept_and.mp3' },
+  concept_ip:          { es:'audio/es_concept_ip.mp3', en:'audio/en_concept_ip.mp3' },
+  concept_mask:        { es:'audio/es_concept_mask.mp3', en:'audio/en_concept_mask.mp3' },
+  concept_vlsm:        { es:'audio/es_concept_vlsm.mp3', en:'audio/en_concept_vlsm.mp3' },
+  explorer:            { es:'audio/es_explorer.mp3', en:'audio/en_explorer.mp3' },
+  feedback_correct:    { es:'audio/es_feedback_correct.mp3', en:'audio/en_feedback_correct.mp3' },
+  feedback_incorrect:  { es:'audio/es_feedback_incorrect.mp3', en:'audio/en_feedback_incorrect.mp3' },
+  hint_calc:           { es:'audio/es_hint_calc.mp3', en:'audio/en_hint_calc.mp3' },
+  hint_error:          { es:'audio/es_hint_error.mp3', en:'audio/en_hint_error.mp3' },
+  hint_hosts:          { es:'audio/es_hint_hosts.mp3', en:'audio/en_hint_hosts.mp3' },
+  hint_vlsm:           { es:'audio/es_hint_vlsm.mp3', en:'audio/en_hint_vlsm.mp3' },
+};
+let currentClipAudio = null;
+
+// Reproduce un clip pregrabado. Siempre suena (acción manual del usuario),
+// sin importar el interruptor global de voz — igual que el botón de
+// "escuchar enunciado" en los ejercicios.
+function playClip(key){
+  const entry = AUDIO_CLIPS[key];
+  if(!entry) return;
+  const src = entry[currentLang] || entry.es;
+  try{
+    window.speechSynthesis.cancel();
+    if(currentClipAudio){ currentClipAudio.pause(); }
+    currentClipAudio = new Audio(src);
+    currentClipAudio.play().catch(()=>{});
+  }catch(e){}
+}
+// Igual que playClip, pero respeta el interruptor global 🔊 — para
+// narración automática (ej. feedback tras "Verificar").
+function playClipIfSoundOn(key){
+  if(!soundOn) return;
+  playClip(key);
+}
+
+function speakConcept(id){
+  const map = { explorerPanel:'explorer', 'concept-ip':'concept_ip', 'concept-mask':'concept_mask', 'concept-and':'concept_and', 'concept-vlsm':'concept_vlsm' };
+  const key = map[id];
+  if(key){ playClip(key); return; }
+  const el = document.getElementById(id);
+  if(!el) return;
+  const clone = el.cloneNode(true);
+  clone.querySelectorAll('button').forEach(b => b.remove());
+  const text = stripHtml(clone.innerHTML);
+  if(!text) return;
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = currentLang === 'en' ? 'en-US' : 'es-ES';
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+function playTone(correct){
+  if(!soundOn) return;
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = correct ? 880 : 220; o.type = 'sine';
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.25);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime+0.3);
+  }catch(e){}
+}
+
+/* ============================================================
+   UTILIDADES COMUNES
+   ============================================================ */
+function ipToInt(ip){ const p=ip.split('.').map(Number); return ((p[0]<<24)|(p[1]<<16)|(p[2]<<8)|p[3])>>>0; }
+function intToIp(n){ return [(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255].join('.'); }
+function intToBits(n){ return (n>>>0).toString(2).padStart(32,'0'); }
+function validarIp(ip){
+  const re=/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/; const m=ip.match(re);
+  if(!m) return false; return m.slice(1).every(o=>Number(o)>=0 && Number(o)<=255);
+}
+function maskFromPrefix(prefix){ return prefix===0 ? 0 : (0xFFFFFFFF<<(32-prefix))>>>0; }
+
+function renderBitsHtml(intVal, prefix, clickable, showLegend){
+  const bits = intToBits(intVal); let html='';
+  for(let o=0;o<4;o++){
+    html+='<div class="octet-group">';
+    for(let b=0;b<8;b++){
+      const idx=o*8+b; const isNet=idx<prefix;
+      const tag = isNet ? L('R','N') : 'H';
+      const label = L(`Bit ${idx+1} de 32, valor ${bits[idx]}, bit de ${isNet?'red':'host'}`,
+                       `Bit ${idx+1} of 32, value ${bits[idx]}, ${isNet?'network':'host'} bit`);
+      const tagName = clickable ? 'button' : 'div';
+      const extraAttrs = clickable ? `type="button" data-bitidx="${idx}"` : `role="img"`;
+      html+=`<${tagName} class="bit ${isNet?'net':'hostbit'} ${clickable?'clickable':''}" ${extraAttrs} aria-label="${label}">${bits[idx]}<span class="bit-tag" aria-hidden="true">${tag}</span></${tagName}>`;
+    }
+    html+='</div>';
+  }
+  let out = `<div class="bits">${html}</div>`;
+  if(showLegend!==false && prefix>0){
+    out += `<div class="bits-legend">${L(
+      `Bits de red: 1–${prefix} (verde, borde sólido) · Bits de host: ${prefix+1}–32 (ámbar, borde punteado)`,
+      `Network bits: 1–${prefix} (green, solid border) · Host bits: ${prefix+1}–32 (amber, dashed border)`
+    )}</div>`;
+  }
+  return out;
+}
+
+function computeSubnetInfo(ipInt, prefix){
+  const maskInt=maskFromPrefix(prefix);
+  const networkInt=(ipInt & maskInt)>>>0;
+  const blockSize=Math.pow(2,32-prefix);
+  const broadcastInt=networkInt+blockSize-1;
+  // /31: enlace punto a punto (RFC 3021), 2 hosts sin red ni broadcast. /32: un solo host.
+  const usable= prefix===31 ? 2 : prefix===32 ? 1 : Math.max(blockSize-2,0);
+  const firstUsable= prefix>=31 ? networkInt : (usable>0?networkInt+1:null);
+  const lastUsable= prefix>=31 ? broadcastInt : (usable>0?broadcastInt-1:null);
+  return {maskInt,networkInt,blockSize,broadcastInt,usable,firstUsable,lastUsable,prefix};
+}
+
+function buildCalcSteps(ipRaw, ipInt, prefix){
+  const info=computeSubnetInfo(ipInt,prefix);
+  const ipBits=intToBits(ipInt), maskBits=intToBits(info.maskInt);
+  return [
+    { title:L('Paso 1 — Convertir la IP a binario','Step 1 — Convert the IP to binary'),
+      text:L(`La IP <b>${ipRaw||intToIp(ipInt)}</b> se convierte octeto por octeto a binario (8 bits cada uno).`,
+              `The IP <b>${ipRaw||intToIp(ipInt)}</b> is converted octet by octet to binary (8 bits each).`),
+      bits:renderBitsHtml(ipInt,0), dotted:`<div class="dotted"><b>${ipRaw||intToIp(ipInt)}</b> → ${ipBits.match(/.{1,8}/g).join('.')}</div>` },
+    { title:L(`Paso 2 — Aplicar el prefijo /${prefix}`,`Step 2 — Apply the /${prefix} prefix`),
+      text:L(`El prefijo <b>/${prefix}</b> indica que los primeros <b>${prefix} bits</b> son de red y los <b>${32-prefix} bits</b> restantes son de host.`,
+              `The /${prefix} prefix means the first <b>${prefix} bits</b> are network bits and the remaining <b>${32-prefix} bits</b> are host bits.`),
+      bits:renderBitsHtml(ipInt,prefix), dotted:`<div class="dotted">${L('Máscara','Mask')}: <b>${intToIp(info.maskInt)}</b> (${maskBits.match(/.{1,8}/g).join('.')})</div>` },
+    { title:L('Paso 3 — Calcular la dirección de red (AND)','Step 3 — Calculate the network address (AND)'),
+      text:L(`Se aplica un <b>AND lógico</b> entre la IP y la máscara: cada bit de host se pone en 0.`,
+              `A logical <b>AND</b> is applied between the IP and the mask: every host bit is set to 0.`),
+      bits:renderBitsHtml(info.networkInt,prefix), dotted:`<div class="dotted">${L('Dirección de red','Network address')} → <b>${intToIp(info.networkInt)}/${prefix}</b></div>` },
+    { title:L('Paso 4 — Calcular el broadcast','Step 4 — Calculate the broadcast'),
+      text:L(`Se toma la red y se ponen <b>todos los bits de host en 1</b>: esa es la dirección de broadcast.`,
+              `Take the network and set <b>every host bit to 1</b>: that is the broadcast address.`),
+      bits:renderBitsHtml(info.broadcastInt,prefix), dotted:`<div class="dotted">Broadcast → <b>${intToIp(info.broadcastInt)}</b></div>` },
+    { title:L('Paso 5 — Rango de hosts utilizables','Step 5 — Usable host range'),
+      text: prefix===31
+        ? L(`Caso especial /31: en un enlace punto a punto (RFC 3021) no se reservan red ni broadcast. Las <b>2</b> direcciones son utilizables.`,
+            `Special /31 case: on a point-to-point link (RFC 3021) no network or broadcast address is reserved. Both addresses (<b>2</b>) are usable.`)
+        : info.usable>0
+        ? L(`De las <b>${fmtNum(info.blockSize)}</b> direcciones, se restan 2 (red y broadcast). Quedan <b>${fmtNum(info.usable)} hosts utilizables</b>.`,
+            `Of the <b>${fmtNum(info.blockSize)}</b> addresses, 2 are subtracted (network and broadcast). That leaves <b>${fmtNum(info.usable)} usable hosts</b>.`)
+        : L(`Con /${prefix} no quedan direcciones utilizables.`, `With /${prefix} there are no usable addresses left.`),
+      bits:'', dotted: info.usable>0 ? `<div class="dotted">${L('Rango','Range')}: <b>${intToIp(info.firstUsable)}</b> — <b>${intToIp(info.lastUsable)}</b></div>` : '' }
+  ];
+}
+
+function makeStepper(containerId,dotsId,prevId,nextId){
+  let steps=[], cur=0;
+  function render(){
+    const c=document.getElementById(containerId);
+    c.innerHTML=steps.map((s,i)=>`<div class="step ${i===cur?'visible':''}">
+      <div class="step-num">${s.title}</div><div class="step-text">${s.text}</div>${s.bits||''}${s.dotted||''}</div>`).join('');
+    if(dotsId){
+      const d=document.getElementById(dotsId);
+      d.innerHTML=steps.map((s,i)=>`<div class="step-dot ${i===cur?'active':''}" onclick="__stepGoto_${containerId}(${i})">${i+1}</div>`).join('');
+    }
+    if(prevId) document.getElementById(prevId).disabled=cur===0;
+    if(nextId) document.getElementById(nextId).disabled=cur===steps.length-1;
+  }
+  window['__stepGoto_'+containerId]=function(i){cur=i;render();};
+  return { setSteps(s){steps=s;cur=0;render();}, next(){if(cur<steps.length-1){cur++;render();}}, prev(){if(cur>0){cur--;render();}} };
+}
+
+/* ============================================================
+   EXPLORADOR DE BITS (Conceptos)
+   ============================================================ */
+let explorerIpInt = ipToInt('192.168.1.10');
+function renderExplorer(){
+  const prefix = parseInt(document.getElementById('explorerPrefix').value,10);
+  document.getElementById('explorerPrefixLabel').textContent = '/'+prefix;
+  document.getElementById('explorerBits').innerHTML = renderBitsHtml(explorerIpInt, prefix, true);
+  document.querySelectorAll('#explorerBits .bit').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const idx = parseInt(el.getAttribute('data-bitidx'),10);
+      explorerIpInt = (explorerIpInt ^ (1 << (31-idx))) >>> 0;
+      renderExplorer();
+    });
+  });
+  const info = computeSubnetInfo(explorerIpInt, prefix);
+  document.getElementById('explorerIpOut').textContent = intToIp(explorerIpInt);
+  document.getElementById('explorerNetOut').textContent = intToIp(info.networkInt)+'/'+prefix;
+  document.getElementById('explorerBcastOut').textContent = intToIp(info.broadcastInt);
+  document.getElementById('explorerHostsOut').textContent = info.usable.toLocaleString('es');
+}
+document.getElementById('explorerPrefix').addEventListener('input', renderExplorer);
+
+/* ============================================================
+   MODO: CALCULADORA — Subnetting simple
+   ============================================================ */
+const learnStepper = makeStepper('stepsContainerL','dotsL','prevBtnL','nextBtnL');
+const prefixRange = document.getElementById('prefixRange');
+const prefixVal = document.getElementById('prefixVal');
+prefixRange.addEventListener('input', ()=>{ prefixVal.textContent='/'+prefixRange.value; });
+
+function cargarEjemplo(ip, prefix){
+  document.getElementById('ipInput').value=ip; prefixRange.value=prefix; prefixVal.textContent='/'+prefix;
+  calcularLearn();
+}
+function calcularLearn(){
+  const ipRaw=document.getElementById('ipInput').value.trim();
+  const prefix=parseInt(prefixRange.value,10);
+  const errorBox=document.getElementById('errorBox');
+  if(!validarIp(ipRaw)){
+    errorBox.style.display='block'; errorBox.textContent=L('IP inválida. Usa el formato x.x.x.x con valores entre 0 y 255.','Invalid IP. Use the x.x.x.x format with values between 0 and 255.');
+    document.getElementById('summary').innerHTML=''; document.getElementById('stepsContainerL').innerHTML=''; return;
+  }
+  errorBox.style.display='none';
+  const ipInt=ipToInt(ipRaw); const info=computeSubnetInfo(ipInt,prefix);
+  document.getElementById('summary').innerHTML=`
+    <div class="stat"><div class="k">${L('Dirección de red','Network address')}</div><div class="v net">${intToIp(info.networkInt)}/${prefix}</div></div>
+    <div class="stat"><div class="k">Broadcast</div><div class="v">${intToIp(info.broadcastInt)}</div></div>
+    <div class="stat"><div class="k">${L('Máscara de subred','Subnet mask')}</div><div class="v">${intToIp(info.maskInt)}</div></div>
+    <div class="stat"><div class="k">${L('Rango utilizable','Usable range')}</div><div class="v host">${info.usable>0?intToIp(info.firstUsable)+' — '+intToIp(info.lastUsable):'—'}</div></div>
+    <div class="stat"><div class="k">${L('Hosts utilizables','Usable hosts')}</div><div class="v">${fmtNum(info.usable)}</div></div>
+    <div class="stat"><div class="k">${L('Wildcard mask','Wildcard mask')}</div><div class="v">${intToIp((~info.maskInt)>>>0)}</div></div>`;
+  learnStepper.setSteps(buildCalcSteps(ipRaw, ipInt, prefix));
+}
+
+/* ============================================================
+   MODO: CALCULADORA — VLSM
+   ============================================================ */
+const vlsmStepper = makeStepper('stepsContainerV','dotsV','prevBtnV','nextBtnV');
+let subnetRowId=0;
+function addSubnetRow(name='', hosts=''){
+  subnetRowId++;
+  const list=document.getElementById('subnetList');
+  const row=document.createElement('div');
+  row.style.cssText='display:grid;grid-template-columns:1fr 74px 26px;gap:6px;margin-bottom:7px;align-items:center;';
+  row.id='vrow-'+subnetRowId;
+  row.innerHTML=`<input type="text" placeholder="${L('Nombre','Name')}" value="${name}">
+    <input type="number" placeholder="${L('Hosts','Hosts')}" min="1" value="${hosts}">
+    <button class="secondary" style="padding:6px;color:var(--error);" onclick="document.getElementById('vrow-${subnetRowId}').remove()">✕</button>`;
+  list.appendChild(row);
+}
+const vlsmPalette=['#4fd6c4','#f2b84b','#7aa6ff','#e08fd8','#8bd17c','#ff9d7a','#c9b6ff','#6fc2e0'];
+
+function calcularVLSM(){
+  const errorBox=document.getElementById('vlsmErrorBox'); errorBox.style.display='none';
+  const baseIpRaw=document.getElementById('baseIp').value.trim();
+  const basePrefix=parseInt(document.getElementById('basePrefix').value.replace('/',''),10);
+  if(!validarIp(baseIpRaw)||isNaN(basePrefix)||basePrefix<1||basePrefix>30){
+    errorBox.style.display='block'; errorBox.textContent=L('Red base inválida. Verifica la IP y el prefijo (1-30).','Invalid base network. Check the IP and the prefix (1-30).'); return;
+  }
+  const rows=Array.from(document.querySelectorAll('#subnetList > div'));
+  if(rows.length===0){ errorBox.style.display='block'; errorBox.textContent=L('Agrega al menos una subred.','Add at least one subnet.'); return; }
+  const subnets=[];
+  for(const row of rows){
+    const inputs=row.querySelectorAll('input');
+    const name=inputs[0].value.trim()||L('Subred','Subnet'); const hosts=parseInt(inputs[1].value,10);
+    if(isNaN(hosts)||hosts<1){ errorBox.style.display='block'; errorBox.textContent=L(`La subred "${name}" necesita un número de hosts válido.`,`Subnet "${name}" needs a valid host count.`); return; }
+    subnets.push({name,hosts});
+  }
+  const baseNetInt=ipToInt(baseIpRaw)&maskFromPrefix(basePrefix);
+  const totalSize=Math.pow(2,32-basePrefix);
+  const ordered=subnets.map((s,i)=>({...s,origIndex:i})).sort((a,b)=>b.hosts-a.hosts);
+  let offset=0; const results=[];
+  for(const s of ordered){
+    let n=0; while(Math.pow(2,n)-2<s.hosts) n++;
+    const blockSize=Math.pow(2,n); const prefix=32-n;
+    const alignedOffset=Math.ceil(offset/blockSize)*blockSize;
+    const networkInt=baseNetInt+alignedOffset;
+    if(alignedOffset+blockSize>totalSize){
+      errorBox.style.display='block'; errorBox.textContent=L(`No hay espacio suficiente para "${s.name}". Reduce el número de subredes o usa una red base más grande.`,`Not enough space for "${s.name}". Reduce the number of subnets or use a larger base network.`); return;
+    }
+    const broadcastInt=networkInt+blockSize-1; const usable=blockSize-2;
+    results.push({name:s.name,hostsRequested:s.hosts,network:intToIp(networkInt),networkInt,blockSize,n,prefix,
+      mask:intToIp(maskFromPrefix(prefix)),
+      rangeText: usable>0?`${intToIp(networkInt+1)} — ${intToIp(broadcastInt-1)}`:L('sin hosts utilizables','no usable hosts'),
+      broadcast:intToIp(broadcastInt),broadcastInt,usable,offsetBefore:offset,alignedOffset,gap:alignedOffset-offset});
+    offset=alignedOffset+blockSize;
+  }
+  const byOrig=new Array(subnets.length); ordered.forEach((s,idx)=>{byOrig[s.origIndex]=results[idx];});
+
+  const tbody=document.getElementById('vlsmResultBody');
+  tbody.innerHTML=byOrig.map((r,i)=>`<tr>
+    <td><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${vlsmPalette[i%vlsmPalette.length]};margin-right:6px;"></span>${r.name}</td>
+    <td>${r.hostsRequested}</td><td>${r.network}</td><td>/${r.prefix}</td><td>${r.mask}</td>
+    <td>${r.rangeText}</td><td>${r.broadcast}</td><td>${r.usable}</td></tr>`).join('');
+
+  const sorted=[...byOrig].sort((a,b)=>a.networkInt-b.networkInt);
+  let barHtml=''; let cursor=baseNetInt; const usedTotal=sorted.reduce((s,r)=>s+r.blockSize,0);
+  sorted.forEach(r=>{
+    const origIdx=byOrig.indexOf(r); const gapSize=r.networkInt-cursor;
+    if(gapSize>0){ const pct=(gapSize/totalSize*100).toFixed(2); barHtml+=`<div style="width:${pct}%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:0.68rem;color:var(--muted);">${L('libre','free')}</div>`; }
+    const pct=(r.blockSize/totalSize*100).toFixed(2);
+    barHtml+=`<div style="width:${pct}%;background:${vlsmPalette[origIdx%vlsmPalette.length]};display:flex;align-items:center;justify-content:center;font-size:0.68rem;color:#052622;font-weight:650;" title="${r.name}">${r.blockSize>=8?'/'+r.prefix:''}</div>`;
+    cursor=r.networkInt+r.blockSize;
+  });
+  const trailingGap=(baseNetInt+totalSize)-cursor;
+  if(trailingGap>0){ const pct=(trailingGap/totalSize*100).toFixed(2); barHtml+=`<div style="width:${pct}%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:0.68rem;color:var(--muted);">${L('libre','free')}</div>`; }
+  document.getElementById('spaceBar').innerHTML=barHtml;
+  document.getElementById('spaceLegend').innerHTML=byOrig.map((r,i)=>`<span><span class="swatch" style="background:${vlsmPalette[i%vlsmPalette.length]};"></span>${r.name} (/${r.prefix})</span>`).join('')+`<span><span class="swatch" style="background:var(--surface-2);border:1px solid var(--border);"></span>${L('libre','free')}</span>`;
+
+  const freeTotal=totalSize-usedTotal;
+  document.getElementById('vlsmSummaryNote').innerHTML=L(
+    `<b>${baseIpRaw}/${basePrefix}</b> tiene ${fmtNum(totalSize)} direcciones. Se asignaron <b>${fmtNum(usedTotal)}</b>, quedando <b>${fmtNum(freeTotal)}</b> libres.`,
+    `<b>${baseIpRaw}/${basePrefix}</b> has ${fmtNum(totalSize)} addresses. <b>${fmtNum(usedTotal)}</b> were assigned, leaving <b>${fmtNum(freeTotal)}</b> free.`
+  );
+
+  const orderListHtml=ordered.map((s,i)=>`<div class="step-text">${i+1}. ${s.name} — ${s.hosts} ${L('hosts','hosts')}</div>`).join('');
+  const vsteps=[{title:L('Paso 1 — Ordenar de mayor a menor','Step 1 — Sort from largest to smallest'),
+    text:L('Se asigna primero a la subred que más direcciones necesita, para no fragmentar el espacio.','The subnet that needs the most addresses is assigned first, to avoid fragmenting the space.'),
+    bits:'',dotted:orderListHtml}];
+  results.forEach((r,i)=>{
+    const gapText = r.gap>0
+      ? L(` Antes de esta subred quedaban <code>${r.gap}</code> direcciones sin usar por el alineamiento.`, ` Before this subnet, <code>${r.gap}</code> addresses were left unused due to alignment.`)
+      : L(' El bloque anterior terminó justo en un múltiplo del tamaño necesario, sin espacio perdido.', ' The previous block ended exactly on a multiple of the needed size, with no space lost.');
+    vsteps.push({title:L(`Paso ${i+2} — Calcular "${r.name}" (${r.hostsRequested} hosts)`,`Step ${i+2} — Calculate "${r.name}" (${r.hostsRequested} hosts)`),
+      text:L(`Se necesitan <b>${r.n}</b> bits de host (<code>2^${r.n}=${r.blockSize}</code>) → prefijo <b>/${r.prefix}</b>.${gapText}`,
+             `<b>${r.n}</b> host bits are needed (<code>2^${r.n}=${r.blockSize}</code>) → prefix <b>/${r.prefix}</b>.${gapText}`),
+      bits:renderBitsHtml(r.networkInt,r.prefix),
+      dotted:`<div class="dotted">${L('Red','Network')} → <b>${r.network}/${r.prefix}</b> · ${L('rango','range')} ${r.rangeText} · broadcast <b>${r.broadcast}</b></div>`});
+  });
+  vsteps.push({title:L(`Paso ${results.length+2} — Resultado final`,`Step ${results.length+2} — Final result`),
+    text:L(`Quedaron <b>${fmtNum(freeTotal)}</b> direcciones libres para crecimiento futuro.`,`<b>${fmtNum(freeTotal)}</b> addresses remain free for future growth.`),
+    bits:'',dotted:''});
+  vlsmStepper.setSteps(vsteps);
+}
+
+/* ============================================================
+   NAVEGACIÓN
+   ============================================================ */
+function switchMode(mode){
+  ['concepts','calc','practice'].forEach(m=>{
+    document.getElementById('panel'+cap(m)).classList.toggle('active', m===mode);
+    const btn=document.getElementById('tab'+cap(m)+'Btn');
+    btn.classList.toggle('active', m===mode);
+    btn.setAttribute('aria-selected', m===mode ? 'true':'false');
+  });
+}
+function switchCalcSub(sub){
+  document.getElementById('calcPanelSimple').classList.toggle('active', sub==='simple');
+  document.getElementById('calcPanelVlsm').classList.toggle('active', sub==='vlsm');
+  const simpleBtn=document.getElementById('calcSubBtnSimple'), vlsmBtn=document.getElementById('calcSubBtnVlsm');
+  simpleBtn.classList.toggle('active', sub==='simple');
+  vlsmBtn.classList.toggle('active', sub==='vlsm');
+  simpleBtn.setAttribute('aria-selected', sub==='simple' ? 'true':'false');
+  vlsmBtn.setAttribute('aria-selected', sub==='vlsm' ? 'true':'false');
+}
+function switchLevel(level){
+  ['basico','intermedio','avanzado'].forEach(l=>{
+    document.getElementById('level'+cap(l)).classList.toggle('active', l===level);
+    const tab=document.getElementById('levelTab'+cap(l));
+    tab.classList.toggle('active', l===level);
+    tab.setAttribute('aria-selected', l===level ? 'true':'false');
+  });
+}
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+/* ============================================================
+   PERSISTENCIA (localStorage)
+   ============================================================ */
+const STORAGE_KEY='tutorRedesVLSM_v1';
+function defaultScores(){
+  return { basico:mkLevelScore(), intermedio:mkLevelScore(), avanzado:mkLevelScore() };
+}
+function mkLevelScore(){ return { attempts:0, correct:0, byCategory:{ subnetting:{attempts:0,correct:0}, vlsm:{attempts:0,correct:0} } }; }
+let scores;
+try{
+  const raw = localStorage.getItem(STORAGE_KEY);
+  scores = raw ? JSON.parse(raw) : defaultScores();
+}catch(e){ scores = defaultScores(); }
+function saveScores(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(scores)); }catch(e){} }
+
+function updateScoreBadge(level){
+  const s=scores[level];
+  document.getElementById('score'+cap(level)).textContent=L(`Aciertos: ${s.correct} / ${s.attempts}`,`Correct: ${s.correct} / ${s.attempts}`);
+}
+['basico','intermedio','avanzado'].forEach(updateScoreBadge);
+
+function toggleSummary(){
+  const panel=document.getElementById('summaryPanel');
+  const willShow = panel.style.display==='none';
+  panel.style.display = willShow?'block':'none';
+  if(willShow) renderSummary();
+}
+function renderSummary(){
+  const totals = { subnetting:{attempts:0,correct:0}, vlsm:{attempts:0,correct:0} };
+  ['basico','intermedio','avanzado'].forEach(l=>{
+    ['subnetting','vlsm'].forEach(cat=>{
+      totals[cat].attempts += scores[l].byCategory[cat].attempts;
+      totals[cat].correct += scores[l].byCategory[cat].correct;
+    });
+  });
+  const content=document.getElementById('summaryContent');
+  content.innerHTML=`
+    <div class="summary-card"><div class="t">${L('Subnetting simple','Simple subnetting')}</div><div class="n">${totals.subnetting.correct} / ${totals.subnetting.attempts}</div><div class="sub">${L('aciertos / intentos','correct / attempts')}</div></div>
+    <div class="summary-card"><div class="t">VLSM</div><div class="n">${totals.vlsm.correct} / ${totals.vlsm.attempts}</div><div class="sub">${L('aciertos / intentos','correct / attempts')}</div></div>`;
+}
+
+/* ============================================================
+   GENERADORES DE EJERCICIOS
+   ============================================================ */
+function mulberry32(seed){
+  return function(){
+    seed|=0; seed=(seed+0x6D2B79F5)|0;
+    let t=Math.imul(seed^(seed>>>15),1|seed);
+    t=(t+Math.imul(t^(t>>>7),61|t))^t;
+    return ((t^(t>>>14))>>>0)/4294967296;
+  };
+}
+function randInt(rng,min,max){ return Math.floor(rng()*(max-min+1))+min; }
+function pick(rng,arr){ return arr[Math.floor(rng()*arr.length)]; }
+const deptNamesEs=['Ventas','Sistemas','Contabilidad','Bodega','Gerencia','RRHH','Soporte','Producción','Marketing','Logística'];
+const deptNamesEn=['Sales','Systems','Accounting','Warehouse','Management','HR','Support','Production','Marketing','Logistics'];
+function deptNames(){ return currentLang==='en' ? deptNamesEn : deptNamesEs; }
+
+function genCalcBasico(rng){
+  const ip=[randInt(rng,192,223),randInt(rng,0,255),randInt(rng,0,255),randInt(rng,0,255)].join('.');
+  const prefix=randInt(rng,25,30); const ipInt=ipToInt(ip); const info=computeSubnetInfo(ipInt,prefix);
+  return { type:'calc', category:'subnetting', ip, prefix, ipInt, info };
+}
+function genCalcIntermedio(rng){
+  const first=pick(rng,[randInt(rng,1,126),randInt(rng,128,191),randInt(rng,192,223)]);
+  const ip=[first,randInt(rng,0,255),randInt(rng,0,255),randInt(rng,0,255)].join('.');
+  const prefix=randInt(rng,20,28); const ipInt=ipToInt(ip); const info=computeSubnetInfo(ipInt,prefix);
+  return { type:'calc', category:'subnetting', ip, prefix, ipInt, info };
+}
+function genHostsToPrefix(rng){
+  const hosts=randInt(rng,5,500); let n=0; while(Math.pow(2,n)-2<hosts) n++;
+  const prefix=32-n; const blockSize=Math.pow(2,n);
+  return { type:'hostsToPrefix', category:'subnetting', hosts, prefix, blockSize };
+}
+function genVlsm(rng, n){
+  const netFirst=pick(rng,[10,172,192]);
+  const base = netFirst===10 ? `10.${randInt(rng,0,255)}.${randInt(rng,0,255)}.0`
+             : netFirst===172 ? `172.${randInt(rng,16,31)}.${randInt(rng,0,255)}.0`
+             : `192.168.${randInt(rng,0,255)}.0`;
+  const baseInt=ipToInt(base)>>>0;
+  const names=[]; const dn=deptNames(); while(names.length<n){ const d=pick(rng,dn); if(!names.includes(d)) names.push(d); }
+  const subnets=names.map(name=>({name,hosts:randInt(rng,5,50)}));
+  const ordered=subnets.map((s,i)=>({...s,origIndex:i})).sort((a,b)=>b.hosts-a.hosts);
+  let offset=0; const results=[];
+  for(const s of ordered){
+    let bn=0; while(Math.pow(2,bn)-2<s.hosts) bn++;
+    const blockSize=Math.pow(2,bn); const prefix=32-bn;
+    const aligned=Math.ceil(offset/blockSize)*blockSize;
+    const networkInt=baseInt+aligned; const broadcastInt=networkInt+blockSize-1;
+    results.push({name:s.name,hosts:s.hosts,origIndex:s.origIndex,prefix,networkInt,broadcastInt,blockSize});
+    offset=aligned+blockSize;
+  }
+  const byOrig=new Array(subnets.length); ordered.forEach((s,idx)=>{byOrig[s.origIndex]=results[idx];});
+  return { type:'vlsm', category:'vlsm', base, baseInt, subnets, correct:byOrig };
+}
+function genError(rng){
+  const ip=[pick(rng,[10,172,192,200]),randInt(rng,0,255),randInt(rng,0,255),randInt(rng,0,255)].join('.');
+  const prefix=randInt(rng,24,29); const ipInt=ipToInt(ip); const info=computeSubnetInfo(ipInt,prefix);
+  const fields=['red','mascara','broadcast','primerHost','ultimoHost'];
+  const wrongField=pick(rng,fields);
+  const display={ red:intToIp(info.networkInt), mascara:intToIp(info.maskInt), broadcast:intToIp(info.broadcastInt),
+    primerHost: info.usable>0?intToIp(info.firstUsable):'—', ultimoHost: info.usable>0?intToIp(info.lastUsable):'—' };
+  const correctVals={...display};
+  if(wrongField==='mascara'){ display.mascara=intToIp(maskFromPrefix(prefix+(rng()<0.5?1:-1))); }
+  else{
+    const key={red:'networkInt',broadcast:'broadcastInt',primerHost:'firstUsable',ultimoHost:'lastUsable'}[wrongField];
+    display[wrongField]=intToIp(info[key]+(rng()<0.5?1:-1));
+  }
+  return { type:'error', category:'subnetting', ip, prefix, info, display, correctVals, wrongField };
+}
+function genEdgeCase(rng){
+  const ip=[pick(rng,[10,172,192]),randInt(rng,0,255),randInt(rng,0,255),randInt(rng,0,255)].join('.');
+  const prefix=pick(rng,[30,31]); const ipInt=ipToInt(ip); const info=computeSubnetInfo(ipInt,prefix);
+  return { type:'calc', category:'subnetting', ip, prefix, ipInt, info, edge:true };
+}
+
+const LEVEL_POOLS = {
+  basico: [
+    { w:0.65, gen:genCalcBasico },
+    { w:0.35, gen:(rng)=>genVlsm(rng,2) },
+  ],
+  intermedio: [
+    { w:0.4, gen:genCalcIntermedio },
+    { w:0.3, gen:genHostsToPrefix },
+    { w:0.3, gen:(rng)=>genVlsm(rng,3) },
+  ],
+  avanzado: [
+    { w:0.4, gen:(rng)=>genVlsm(rng,3) },
+    { w:0.35, gen:genError },
+    { w:0.25, gen:genEdgeCase },
+  ],
+};
+
+function weightedPick(rng, pool){
+  const total = pool.reduce((s,p)=>s+p.w,0);
+  let r = rng()*total;
+  for(const p of pool){ if(r<p.w) return p.gen; r-=p.w; }
+  return pool[pool.length-1].gen;
+}
+
+function genForLevel(level, rng, focus){
+  const pool = LEVEL_POOLS[level];
+  let ex, tries=0;
+  do{
+    const gen = weightedPick(rng, pool);
+    ex = gen(rng);
+    tries++;
+  } while(focus && focus!=='todo' && ex.category!==focus && tries<10);
+  return ex;
+}
+
+/* ============================================================
+   ESTADO DE PRÁCTICA
+   ============================================================ */
+const currentExercise={basico:null,intermedio:null,avanzado:null};
+const failStreak={basico:{subnetting:0,vlsm:0},intermedio:{subnetting:0,vlsm:0},avanzado:{subnetting:0,vlsm:0}};
+const correctStreak={basico:0,intermedio:0,avanzado:0};
+let currentFocus='todo';
+
+function onFocusChange(){ currentFocus=document.getElementById('focusFilter').value; }
+
+function newExercise(level, randomizeSeed){
+  const seedInput=document.getElementById('seed'+cap(level));
+  let seed;
+  if(randomizeSeed || !seedInput.value){ seed=Math.floor(Math.random()*1e9); seedInput.value=seed; }
+  else{ seed=parseInt(seedInput.value,10)||0; }
+  const rng=mulberry32(seed);
+  const ex=genForLevel(level, rng, currentFocus);
+  currentExercise[level]=ex;
+  document.getElementById('feedback'+cap(level)).style.display='none';
+  document.getElementById('hint'+cap(level)).classList.remove('visible');
+  document.getElementById('explainBtn'+cap(level)).style.display='none';
+  document.getElementById('explainArea'+cap(level)).innerHTML='';
+  document.getElementById('conceptLink'+cap(level)).classList.remove('visible');
+  renderExercise(level, ex);
+}
+
+function fieldRow(id,labelText){
+  return `<div class="field-item"><label for="${id}">${labelText}</label><input type="text" id="${id}"><div class="field-msg" id="${id}Msg"></div></div>`;
+}
+function categoryTag(cat){ return `<span class="exercise-tag">${cat==='vlsm'?'VLSM':'Subnetting'}</span>`; }
+function errorFieldLabels(){
+  return { red:L('Red','Network'), mascara:L('Máscara','Mask'), broadcast:'Broadcast',
+           primerHost:L('Primer host','First host'), ultimoHost:L('Último host','Last host') };
+}
+
+const promptText={basico:'',intermedio:'',avanzado:''};
+function renderExercise(level, ex){
+  const box=document.getElementById('exerciseBox'+cap(level));
+  if(ex.type==='calc'){
+    const edgeText = ex.edge ? L('Caso límite — presta atención: ','Edge case — pay attention: ') : '';
+    box.innerHTML=`${categoryTag(ex.category)}
+      <div class="exercise-prompt">${edgeText}${L(`Calcula los datos de la subred para`,`Work out the subnet data for`)} <b>${ex.ip} /${ex.prefix}</b>.</div>
+      <div class="field-grid">
+        ${fieldRow('f_red',L('Dirección de red','Network address'))}
+        ${fieldRow('f_mascara',L('Máscara de subred','Subnet mask'))}
+        ${fieldRow('f_broadcast','Broadcast')}
+        ${fieldRow('f_primerHost',L('Primer host utilizable (o "—" si no hay)','First usable host (or "—" if none)'))}
+        ${fieldRow('f_ultimoHost',L('Último host utilizable (o "—" si no hay)','Last usable host (or "—" if none)'))}
+        ${fieldRow('f_cantidad',L('Cantidad de hosts utilizables','Number of usable hosts'))}
+      </div>`;
+    promptText[level] = `${edgeText}${L('Calcula los datos de la subred para','Work out the subnet data for')} ${ex.ip} slash ${ex.prefix}.`;
+  } else if(ex.type==='hostsToPrefix'){
+    box.innerHTML=`${categoryTag(ex.category)}
+      <div class="exercise-prompt">${L(`Necesitas una subred con al menos <b>${ex.hosts} hosts</b> utilizables. ¿Cuál es el prefijo mínimo y el tamaño del bloque?`,
+                                        `You need a subnet with at least <b>${ex.hosts} usable hosts</b>. What is the minimum prefix and the block size?`)}</div>
+      <div class="field-grid">
+        ${fieldRow('f_prefijo',L('Prefijo mínimo (solo el número, ej. 24)','Minimum prefix (number only, e.g. 24)'))}
+        ${fieldRow('f_bloque',L('Tamaño del bloque (direcciones totales)','Block size (total addresses)'))}
+      </div>`;
+    promptText[level] = L(`Necesitas una subred con al menos ${ex.hosts} hosts utilizables. ¿Cuál es el prefijo mínimo?`,
+                           `You need a subnet with at least ${ex.hosts} usable hosts. What is the minimum prefix?`);
+  } else if(ex.type==='vlsm'){
+    const rows=ex.subnets.map((s,i)=>`<tr><td class="name">${s.name} (${s.hosts} ${L('hosts','hosts')})</td>
+      <td><input type="text" id="f_vlsm_prefijo_${i}" placeholder="/N"></td>
+      <td><input type="text" id="f_vlsm_red_${i}" placeholder="x.x.x.x"></td>
+      <td><input type="text" id="f_vlsm_broadcast_${i}" placeholder="x.x.x.x"></td></tr>`).join('');
+    box.innerHTML=`${categoryTag(ex.category)}
+      <div class="exercise-prompt">${L(`Asigna estas subredes sobre la red base <b>${ex.base}/24</b> usando VLSM (ordena internamente de mayor a menor).`,
+                                        `Allocate these subnets over the base network <b>${ex.base}/24</b> using VLSM (sort largest to smallest internally).`)}</div>
+      <table class="vlsm-table"><thead><tr><th>${L('Subred','Subnet')}</th><th>${L('Prefijo','Prefix')}</th><th>${L('Red','Network')}</th><th>Broadcast</th></tr></thead><tbody>${rows}</tbody></table>`;
+    promptText[level] = L(`Asigna estas subredes sobre la red base ${ex.base}/24 usando VLSM.`,`Allocate these subnets over the base network ${ex.base}/24 using VLSM.`);
+  } else if(ex.type==='error'){
+    const labels=errorFieldLabels();
+    const rows=Object.keys(labels).map(k=>`<tr><td class="k">${labels[k]}</td><td class="v">${ex.display[k]}</td></tr>`).join('');
+    const options=Object.keys(labels).map(k=>`<label class="mc-option" data-field="${k}"><input type="radio" name="mcError_${level}" value="${k}"> ${labels[k]}</label>`).join('');
+    box.innerHTML=`${categoryTag(ex.category)}
+      <div class="exercise-prompt">${L(`Este cálculo para <b>${ex.ip} /${ex.prefix}</b> tiene un valor incorrecto. ¿Cuál es?`,
+                                        `This calculation for <b>${ex.ip} /${ex.prefix}</b> has one incorrect value. Which one?`)}</div>
+      <table class="reveal-table">${rows}</table>
+      <div class="mc-options">${options}</div>`;
+    promptText[level] = L(`Este cálculo para ${ex.ip} /${ex.prefix} tiene un valor incorrecto. ¿Cuál es?`,
+                           `This calculation for ${ex.ip} /${ex.prefix} has one incorrect value. Which one?`);
+    box.querySelectorAll('.mc-option').forEach(el=>{
+      el.addEventListener('click',()=>{
+        box.querySelectorAll('.mc-option').forEach(o=>o.classList.remove('selected'));
+        el.classList.add('selected'); el.querySelector('input').checked=true;
+      });
+    });
+  }
+}
+
+/* -------- pistas -------- */
+function getHint(ex){
+  if(ex.type==='calc') return L('Primero convierte el prefijo en máscara; luego aplica AND entre la IP y la máscara para obtener la red.',
+                                 'First turn the prefix into a mask; then apply AND between the IP and the mask to get the network.');
+  if(ex.type==='hostsToPrefix') return L('Busca el menor n tal que 2^n − 2 sea mayor o igual a los hosts pedidos; el prefijo es 32 − n.',
+                                          'Find the smallest n such that 2^n − 2 is at least the requested hosts; the prefix is 32 − n.');
+  if(ex.type==='vlsm') return L('Ordena las subredes de mayor a menor cantidad de hosts antes de asignar los bloques, uno tras otro.',
+                                 'Sort the subnets from largest to smallest host count before assigning the blocks, one after another.');
+  if(ex.type==='error') return L('Recalcula cada valor de la tabla por separado y compáralo con lo mostrado — el error está en uno solo.',
+                                  'Recalculate each value in the table separately and compare it with what is shown — only one is wrong.');
+  return '';
+}
+function showHint(level){
+  const ex=currentExercise[level]; if(!ex) return;
+  const el=document.getElementById('hint'+cap(level));
+  el.textContent='💡 '+getHint(ex); el.classList.add('visible');
+  const hintKeyMap = { calc:'hint_calc', hostsToPrefix:'hint_hosts', vlsm:'hint_vlsm', error:'hint_error' };
+  const key = hintKeyMap[ex.type];
+  if(key) playClip(key);
+}
+
+/* -------- verificación -------- */
+function setFieldFeedback(id, ok, correctText){
+  const input=document.getElementById(id); const msg=document.getElementById(id+'Msg');
+  if(!input) return;
+  input.classList.remove('field-ok','field-bad'); input.classList.add(ok?'field-ok':'field-bad');
+  if(msg){ msg.textContent = ok?L('✓ correcto','✓ correct'):L(`✗ era ${correctText}`,`✗ was ${correctText}`); msg.className='field-msg '+(ok?'ok':'bad'); }
+}
+function normIp(str){ return (str||'').trim(); }
+function ipEquals(a,b){ return normIp(a)===normIp(b); }
+
+function verifyExercise(level){
+  const ex=currentExercise[level]; if(!ex) return;
+  const feedback=document.getElementById('feedback'+cap(level));
+  let allOk=true;
+
+  if(ex.type==='calc'){
+    const checks=[
+      ['f_red',intToIp(ex.info.networkInt)],['f_mascara',intToIp(ex.info.maskInt)],
+      ['f_broadcast',intToIp(ex.info.broadcastInt)],
+      ['f_primerHost', ex.info.usable>0?intToIp(ex.info.firstUsable):'—'],
+      ['f_ultimoHost', ex.info.usable>0?intToIp(ex.info.lastUsable):'—'],
+      ['f_cantidad', String(ex.info.usable)],
+    ];
+    checks.forEach(([id,correct])=>{ const val=document.getElementById(id).value; const ok=ipEquals(val,correct); if(!ok) allOk=false; setFieldFeedback(id,ok,correct); });
+  } else if(ex.type==='hostsToPrefix'){
+    [['f_prefijo',String(ex.prefix)],['f_bloque',String(ex.blockSize)]].forEach(([id,correct])=>{
+      const val=document.getElementById(id).value; const ok=ipEquals(val,correct); if(!ok) allOk=false; setFieldFeedback(id,ok,correct);
+    });
+  } else if(ex.type==='vlsm'){
+    ex.subnets.forEach((s,i)=>{
+      const c=ex.correct[i];
+      const checks=[
+        [`f_vlsm_prefijo_${i}`,'/'+c.prefix,['/'+c.prefix,String(c.prefix)]],
+        [`f_vlsm_red_${i}`,intToIp(c.networkInt),[intToIp(c.networkInt)]],
+        [`f_vlsm_broadcast_${i}`,intToIp(c.broadcastInt),[intToIp(c.broadcastInt)]],
+      ];
+      checks.forEach(([id,correct,accepted])=>{
+        const val=normIp(document.getElementById(id).value);
+        const ok=accepted.some(a=>ipEquals(val,a)); if(!ok) allOk=false; setFieldFeedback(id,ok,correct);
+      });
+    });
+  } else if(ex.type==='error'){
+    const selected=document.querySelector(`input[name="mcError_${level}"]:checked`);
+    const box=document.getElementById('exerciseBox'+cap(level));
+    box.querySelectorAll('.mc-option').forEach(el=>{
+      const field=el.getAttribute('data-field'); el.classList.remove('correct','incorrect');
+      if(field===ex.wrongField) el.classList.add('correct');
+      else if(selected && field===selected.value) el.classList.add('incorrect');
+    });
+    allOk = !!selected && selected.value===ex.wrongField;
+  }
+
+  scores[level].attempts++;
+  scores[level].byCategory[ex.category].attempts++;
+  if(allOk){ scores[level].correct++; scores[level].byCategory[ex.category].correct++; }
+  saveScores();
+  updateScoreBadge(level);
+
+  feedback.style.display=''; feedback.className='feedback-banner '+(allOk?'ok':'bad');
+  feedback.textContent = allOk
+    ? L('¡Correcto! Puedes generar otro ejercicio cuando quieras.','Correct! You can generate another exercise whenever you like.')
+    : L('Algo no coincide — revisa los campos marcados. Puedes ver la explicación paso a paso si quieres repasar.','Something does not match — check the marked fields. You can view the step-by-step explanation if you want to review.');
+  playClipIfSoundOn(allOk ? 'feedback_correct' : 'feedback_incorrect'); playTone(allOk);
+
+  if(!allOk){
+    document.getElementById('explainBtn'+cap(level)).style.display='inline-block';
+    failStreak[level][ex.category]++;
+    if(failStreak[level][ex.category]>=2){
+      const link=document.getElementById('conceptLink'+cap(level));
+      const target = ex.category==='vlsm' ? 'concept-vlsm' : (ex.type==='calc'||ex.type==='error' ? 'concept-and' : 'concept-mask');
+      link.innerHTML = L(`Esto se explica en <a onclick="goToConcept('${target}')">Conceptos</a>.`,
+                          `This is explained in <a onclick="goToConcept('${target}')">Concepts</a>.`);
+      link.classList.add('visible');
+    }
+    correctStreak[level]=0;
+  } else {
+    failStreak[level][ex.category]=0;
+    correctStreak[level]++;
+    if(correctStreak[level]>=5 && level!=='avanzado'){
+      document.getElementById('nudge'+cap(level)).classList.add('visible');
+    }
+  }
+}
+
+function dismissNudge(level){ document.getElementById('nudge'+cap(level)).classList.remove('visible'); correctStreak[level]=0; }
+
+function goToConcept(id){
+  switchMode('concepts');
+  setTimeout(()=>{ document.getElementById(id).scrollIntoView({behavior:'smooth', block:'start'}); }, 50);
+}
+
+/* -------- explicación paso a paso -------- */
+function showExplanation(level){
+  const ex=currentExercise[level]; const area=document.getElementById('explainArea'+cap(level));
+  if(!ex) return;
+
+  if(ex.type==='calc'){
+    area.innerHTML=`<div class="steps-header"><h2 style="margin:0;">${L('Explicación paso a paso','Step-by-step explanation')}</h2>
+      <div class="step-controls"><button class="step-btn" id="prevBtn_${level}">← ${L('Anterior','Previous')}</button><button class="step-btn" id="nextBtn_${level}">${L('Siguiente paso','Next step')} →</button></div></div>
+      <div class="step-dots" id="dots_${level}"></div><div id="steps_${level}"></div>`;
+    const stepper=makeStepper(`steps_${level}`,`dots_${level}`,`prevBtn_${level}`,`nextBtn_${level}`);
+    document.getElementById(`prevBtn_${level}`).onclick=()=>stepper.prev();
+    document.getElementById(`nextBtn_${level}`).onclick=()=>stepper.next();
+    stepper.setSteps(buildCalcSteps(ex.ip, ex.ipInt, ex.prefix));
+
+  } else if(ex.type==='hostsToPrefix'){
+    area.innerHTML=`<div class="step visible"><div class="step-num">${L('Cómo se calcula','How it is calculated')}</div>
+      <div class="step-text">${L(`Se busca el menor n tal que <code>2^n − 2 ≥ ${ex.hosts}</code>. Con n = ${32-ex.prefix} se obtiene un bloque de <code>2^${32-ex.prefix} = ${ex.blockSize}</code> direcciones → prefijo <b>/${ex.prefix}</b>.`,
+                                  `We look for the smallest n such that <code>2^n − 2 ≥ ${ex.hosts}</code>. With n = ${32-ex.prefix}, the block has <code>2^${32-ex.prefix} = ${ex.blockSize}</code> addresses → prefix <b>/${ex.prefix}</b>.`)}</div></div>`;
+
+  } else if(ex.type==='vlsm'){
+    const ordered=[...ex.correct].sort((a,b)=>b.hosts-a.hosts);
+    const rows=ordered.map((r,i)=>`<div class="step visible" style="margin-bottom:8px;">
+      <div class="step-num">${i+1}. ${r.name} — ${r.hosts} ${L('hosts','hosts')}</div>
+      <div class="step-text">${L(`Bloque necesario: ${r.blockSize} direcciones → prefijo`,`Block needed: ${r.blockSize} addresses → prefix`)} <b>/${r.prefix}</b>.</div>
+      <div class="dotted">${L('Red','Network')} → <b>${intToIp(r.networkInt)}/${r.prefix}</b> · broadcast <b>${intToIp(r.broadcastInt)}</b></div></div>`).join('');
+    area.innerHTML=`<div class="step-num" style="margin-bottom:8px;">${L('Orden de asignación y bloques resultantes:','Allocation order and resulting blocks:')}</div>${rows}`;
+
+  } else if(ex.type==='error'){
+    const labels=errorFieldLabels();
+    area.innerHTML=`<div class="step visible"><div class="step-num">${L('Valor correcto','Correct value')}</div>
+      <div class="step-text">${L(`El campo incorrecto era <b>${labels[ex.wrongField]}</b>. Mostraba <code>${ex.display[ex.wrongField]}</code> pero el valor correcto es <code>${ex.correctVals[ex.wrongField]}</code>.`,
+                                   `The incorrect field was <b>${labels[ex.wrongField]}</b>. It showed <code>${ex.display[ex.wrongField]}</code> but the correct value is <code>${ex.correctVals[ex.wrongField]}</code>.`)}</div></div>`;
+  }
+}
+
+/* ============================================================
+   TEXTOS ESTATICOS BILINGUES
+   ============================================================ */
+const STATIC_TEXT = {
+  hdrTitle: {es:'Tutor de Subredes y VLSM', en:'Subnetting and VLSM Tutor'},
+  hdrDesc: {es:'Repasa los conceptos, usa la calculadora paso a paso cuando la necesites, y practica en tres niveles con corrección inmediata. Tu progreso se guarda automáticamente en este navegador.', en:'Review the concepts, use the step-by-step calculator whenever you need it, and practice across three difficulty levels with instant feedback. Your progress is saved automatically in this browser.'},
+
+  tabConceptsBtn: {es:'Conceptos', en:'Concepts'},
+  tabCalcBtn: {es:'Calculadora', en:'Calculator'},
+  tabPracticeBtn: {es:'Practicar', en:'Practice'},
+
+  explorerTitle: {es:'Explorador de bits — pruébalo', en:'Bit explorer — try it'},
+  explorerDesc: {es:'Haz clic en cualquier bit para cambiarlo entre 0 y 1, y mueve el prefijo. Verás en vivo cómo cambian la IP, la red y el broadcast.', en:'Click any bit to toggle it between 0 and 1, and move the prefix. You will see the IP, network and broadcast change live.'},
+  explorerPrefixWord: {es:'Prefijo:', en:'Prefix:'},
+  explLbl1: {es:'Dirección (decimal)', en:'Address (decimal)'},
+  explLbl2: {es:'Dirección de red', en:'Network address'},
+  explLbl3: {es:'Broadcast', en:'Broadcast'},
+  explLbl4: {es:'Hosts utilizables', en:'Usable hosts'},
+
+  ciTitle: {es:'1. ¿Qué es una dirección IP?', en:'1. What is an IP address?'},
+  ciP1: {es:'Una dirección IPv4 son <b>32 bits</b> agrupados en 4 octetos de 8 bits, escritos en decimal separados por puntos (ej. <code>192.168.1.10</code>). Cada octeto va de 0 a 255 porque 8 bits solo pueden representar 256 valores distintos.', en:'An IPv4 address is <b>32 bits</b> grouped into 4 octets of 8 bits, written in decimal separated by dots (e.g. <code>192.168.1.10</code>). Each octet ranges from 0 to 255 because 8 bits can only represent 256 distinct values.'},
+  ciP2: {es:'Prueba cambiar bits en el explorador de arriba y observa cómo el número decimal de ese octeto cambia — el bit más a la izquierda de cada octeto vale 128, el siguiente 64, y así sucesivamente hasta 1.', en:"Try changing bits in the explorer above and watch that octet's decimal number change — the leftmost bit of each octet is worth 128, the next 64, and so on down to 1."},
+
+  cmTitle: {es:'2. ¿Qué hace la máscara de subred?', en:'2. What does the subnet mask do?'},
+  cmP1: {es:'El prefijo (ej. <code>/24</code>) le dice a la red cuántos de esos 32 bits identifican la <b>red</b> (no cambian dentro de la subred) y cuántos identifican el <b>host</b> (varían entre dispositivos).', en:'The prefix (e.g. <code>/24</code>) tells the network how many of those 32 bits identify the <b>network</b> (fixed within the subnet) and how many identify the <b>host</b> (varying between devices).'},
+  cmP2: {es:'Mueve el control de prefijo en el explorador: la línea entre verde (red) y ámbar (host) se desplaza, y verás cómo se recalculan la red y el broadcast al instante — sin cambiar la IP, solo cambiando dónde "corta" la máscara.', en:'Move the prefix control in the explorer: the line between green (network) and amber (host) shifts, and you will see the network and broadcast recalculate instantly — without changing the IP, just where the mask "cuts".'},
+
+  caTitle: {es:'3. El AND lógico bit a bit', en:'3. The bitwise logical AND'},
+  caP1: {es:'Para obtener la dirección de red, la IP y la máscara se combinan con un <b>AND</b>: si ambos bits son 1, el resultado es 1; en cualquier otro caso, es 0. En la práctica esto significa "conservar los bits de red tal cual, y poner todos los bits de host en 0".', en:'To get the network address, the IP and the mask are combined with an <b>AND</b>: if both bits are 1, the result is 1; otherwise it is 0. In practice this means "keep the network bits as they are, and set every host bit to 0".'},
+  caP2: {es:'Ejemplo: con <code>192.168.10.130 /26</code>, los últimos 6 bits del cuarto octeto se ponen en 0, y <code>130</code> (10000010) se convierte en <code>128</code> (10000000) → la red es <code>192.168.10.128</code>.', en:'Example: with <code>192.168.10.130 /26</code>, the last 6 bits of the fourth octet are set to 0, and <code>130</code> (10000010) becomes <code>128</code> (10000000) → the network is <code>192.168.10.128</code>.'},
+
+  cvTitle: {es:'4. ¿Por qué existe VLSM?', en:'4. Why does VLSM exist?'},
+  cvP1: {es:'Sin VLSM, si divides una red en subredes de tamaño fijo, todas deben ser del mismo tamaño — el necesario para la subred más grande. Eso desperdicia direcciones en las subredes pequeñas.', en:'Without VLSM, if you split a network into fixed-size subnets, they must all be the same size — whatever the largest subnet needs. That wastes addresses on the smaller subnets.'},
+  cvP2: {es:'Con tamaño fijo se gastan 192 direcciones; con VLSM, solo 100 — el resto queda libre para crecer. Esa es la idea central: <b>cada subred recibe solo el espacio que realmente necesita</b>.', en:'With a fixed size, 192 addresses are used; with VLSM, only 100 — the rest stays free to grow. That is the core idea: <b>each subnet gets only the space it actually needs</b>.'},
+
+  simEntradaTitle: {es:'Entrada', en:'Input'},
+  simIpLabel: {es:'Dirección IP', en:'IP address'},
+  simPrefixWord: {es:'Prefijo CIDR:', en:'CIDR prefix:'},
+  btnCalcular: {es:'Calcular', en:'Calculate'},
+  exBtn1: {es:'192.168.10.130 /26 — clase C subdividida', en:'192.168.10.130 /26 — subdivided class C'},
+  exBtn2: {es:'10.0.5.200 /22 — subred grande', en:'10.0.5.200 /22 — large subnet'},
+  exBtn3: {es:'172.16.50.10 /30 — enlace punto a punto', en:'172.16.50.10 /30 — point-to-point link'},
+  simResultTitle: {es:'Resultado', en:'Result'},
+  stepsHeaderL: {es:'Explicación paso a paso', en:'Step-by-step explanation'},
+  prevBtnL: {es:'← Anterior', en:'← Previous'},
+  nextBtnL: {es:'Siguiente paso →', en:'Next step →'},
+
+  vlsmRedBaseTitle: {es:'Red base', en:'Base network'},
+  vlsmSubredesTitle: {es:'Subredes requeridas', en:'Required subnets'},
+  btnAgregarSubred: {es:'+ Agregar subred', en:'+ Add subnet'},
+  btnCalcularVlsm: {es:'Calcular VLSM', en:'Calculate VLSM'},
+  vlsmMapaTitle: {es:'Mapa de asignación del espacio de direcciones', en:'Address space allocation map'},
+  vlsmTablaTitle: {es:'Tabla de subredes asignadas', en:'Table of assigned subnets'},
+  stepsHeaderV: {es:'Explicación paso a paso', en:'Step-by-step explanation'},
+  prevBtnV: {es:'← Anterior', en:'← Previous'},
+  nextBtnV: {es:'Siguiente paso →', en:'Next step →'},
+
+  legendNet: {es:'bit / bloque de red', en:'network bit / block'},
+  legendHost: {es:'bit / bloque de host', en:'host bit / block'},
+
+  focusLabel: {es:'Enfoque:', en:'Focus:'},
+  optTodo: {es:'Todo', en:'All'},
+  optSubnetting: {es:'Solo subnetting', en:'Subnetting only'},
+  optVlsm: {es:'Solo VLSM', en:'VLSM only'},
+  btnProgress: {es:'📊 Tu progreso hoy', en:'📊 Your progress today'},
+  summaryTitle: {es:'Tu progreso hoy', en:'Your progress today'},
+
+  levelTabBasico: {es:'Básico', en:'Basic'},
+  levelTabIntermedio: {es:'Intermedio', en:'Intermediate'},
+  levelTabAvanzado: {es:'Avanzado', en:'Advanced'},
+
+  seedLabelBasico: {es:'Semilla:', en:'Seed:'},
+  seedLabelIntermedio: {es:'Semilla:', en:'Seed:'},
+  seedLabelAvanzado: {es:'Semilla:', en:'Seed:'},
+  btnRandBasico: {es:'🔀 Aleatorio', en:'🔀 Random'},
+  btnRandIntermedio: {es:'🔀 Aleatorio', en:'🔀 Random'},
+  btnRandAvanzado: {es:'🔀 Aleatorio', en:'🔀 Random'},
+  btnGenBasico: {es:'▶ Generar', en:'▶ Generate'},
+  btnGenIntermedio: {es:'▶ Generar', en:'▶ Generate'},
+  btnGenAvanzado: {es:'▶ Generar', en:'▶ Generate'},
+
+  btnVerificarBasico: {es:'Verificar', en:'Check'},
+  btnVerificarIntermedio: {es:'Verificar', en:'Check'},
+  btnVerificarAvanzado: {es:'Verificar', en:'Check'},
+  btnPistaBasico: {es:'💡 Pista', en:'💡 Hint'},
+  btnPistaIntermedio: {es:'💡 Pista', en:'💡 Hint'},
+  btnPistaAvanzado: {es:'💡 Pista', en:'💡 Hint'},
+  explainBtnBasico: {es:'Ver explicación paso a paso', en:'View step-by-step explanation'},
+  explainBtnIntermedio: {es:'Ver explicación paso a paso', en:'View step-by-step explanation'},
+  explainBtnAvanzado: {es:'Ver explicación paso a paso', en:'View step-by-step explanation'},
+
+  nudgeTextBasico: {es:'🔥 Vas muy bien en Básico — ¿probamos Intermedio?', en:'🔥 You are doing great in Basic — want to try Intermediate?'},
+  nudgeBtnBasico: {es:'Ir a Intermedio', en:'Go to Intermediate'},
+  nudgeTextIntermedio: {es:'🔥 Vas muy bien en Intermedio — ¿probamos Avanzado?', en:'🔥 You are doing great in Intermediate — want to try Advanced?'},
+  nudgeBtnIntermedio: {es:'Ir a Avanzado', en:'Go to Advanced'},
+
+  practiceFooterNote: {es:'El progreso (aciertos/intentos por nivel y tema) se guarda en este navegador y persiste entre sesiones. La semilla te permite repetir exactamente el mismo ejercicio.', en:'Your progress (correct/attempts per level and topic) is saved in this browser and persists between sessions. The seed lets you repeat the exact same exercise.'},
+};
+
+const CV_TABLE_ES = `<tr><th>Subred</th><th>Hosts necesarios</th><th>Tamaño fijo (todas /26)</th><th>VLSM (tamaño real)</th></tr>
+  <tr><td>Ventas</td><td>50</td><td>64 direcciones</td><td>64 direcciones (/26)</td></tr>
+  <tr><td>Sistemas</td><td>20</td><td>64 direcciones</td><td>32 direcciones (/27)</td></tr>
+  <tr><td>Enlace</td><td>2</td><td>64 direcciones</td><td>4 direcciones (/30)</td></tr>`;
+const CV_TABLE_EN = `<tr><th>Subnet</th><th>Hosts needed</th><th>Fixed size (all /26)</th><th>VLSM (actual size)</th></tr>
+  <tr><td>Sales</td><td>50</td><td>64 addresses</td><td>64 addresses (/26)</td></tr>
+  <tr><td>Systems</td><td>20</td><td>64 addresses</td><td>32 addresses (/27)</td></tr>
+  <tr><td>Link</td><td>2</td><td>64 addresses</td><td>4 addresses (/30)</td></tr>`;
+
+const VLSM_THEAD_ES = `<th>Subred</th><th>Hosts</th><th>Red</th><th>Prefijo</th><th>Máscara</th><th>Rango</th><th>Broadcast</th><th>Hosts disp.</th>`;
+const VLSM_THEAD_EN = `<th>Subnet</th><th>Hosts</th><th>Network</th><th>Prefix</th><th>Mask</th><th>Range</th><th>Broadcast</th><th>Avail. hosts</th>`;
+
+function applyLangStatic(){
+  Object.keys(STATIC_TEXT).forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    const val = STATIC_TEXT[id][currentLang];
+    if(el.tagName === 'OPTION'){ el.textContent = val; }
+    else { el.innerHTML = val; }
+  });
+  const cvTableEl = document.getElementById('cvTable');
+  if(cvTableEl) cvTableEl.innerHTML = currentLang==='en' ? CV_TABLE_EN : CV_TABLE_ES;
+  const vlsmTheadEl = document.getElementById('vlsmTheadRow');
+  if(vlsmTheadEl) vlsmTheadEl.innerHTML = currentLang==='en' ? VLSM_THEAD_EN : VLSM_THEAD_ES;
+  document.documentElement.lang = currentLang;
+}
+
+function updateLangButton(){
+  const btn = document.getElementById('langToggleBtn');
+  if(btn) btn.textContent = currentLang==='es' ? '🌐 EN' : '🌐 ES';
+}
+function updateSoundButton(){
+  const btn = document.getElementById('soundToggleBtn');
+  if(!btn) return;
+  btn.textContent = soundOn ? '🔊' : '🔇';
+  btn.setAttribute('aria-pressed', soundOn ? 'true':'false');
+}
+
+function setLang(lang){
+  if(lang === currentLang) return;
+  currentLang = lang;
+  savePrefs();
+  applyLangStatic();
+  updateLangButton();
+  calcularLearn();
+  calcularVLSM();
+  ['basico','intermedio','avanzado'].forEach(level=>{
+    updateScoreBadge(level);
+    if(currentExercise[level]) renderExercise(level, currentExercise[level]);
+    document.getElementById('feedback'+cap(level)).style.display='none';
+    document.getElementById('hint'+cap(level)).classList.remove('visible');
+    document.getElementById('explainArea'+cap(level)).innerHTML='';
+  });
+  const summaryPanel = document.getElementById('summaryPanel');
+  if(summaryPanel && summaryPanel.style.display!=='none') renderSummary();
+}
+function toggleLang(){ setLang(currentLang==='es' ? 'en' : 'es'); }
+function toggleSound(){
+  soundOn = !soundOn;
+  savePrefs();
+  updateSoundButton();
+  if(!soundOn){ try{ window.speechSynthesis.cancel(); }catch(e){} }
+}
+
+/* ============================================================
+   INICIO
+   ============================================================ */
+applyLangStatic();
+updateLangButton();
+updateSoundButton();
+renderExplorer();
+prefixVal.textContent='/'+prefixRange.value;
+calcularLearn();
+addSubnetRow('Ventas',50); addSubnetRow('Sistemas',20); addSubnetRow('Contabilidad',10); addSubnetRow('Enlace_Router',2);
+calcularVLSM();
+newExercise('basico', true);
+newExercise('intermedio', true);
+newExercise('avanzado', true);
+</script>
+
+
+<script>
+/* ============================================================
+   INTEGRACIÓN SCORM (1.2 y 2004) — para Moodle/Canvas
+   No modifica la lógica de la app; solo reporta progreso al LMS.
+   ============================================================ */
+(function(){
+  var findAttempts = 0;
+  function findAPI(win){
+    while ((win.API == null) && (win.API_1484_11 == null) && (win.parent != null) && (win.parent != win)) {
+      findAttempts++;
+      if (findAttempts > 7) return null;
+      win = win.parent;
+    }
+    if (win.API || win.API_1484_11) return win;
+    return null;
+  }
+  function getAPIWindow(){
+    var win = findAPI(window);
+    if(!win && window.opener) win = findAPI(window.opener);
+    return win;
+  }
+  var apiWin = null, API12 = null, API2004 = null;
+  try{
+    apiWin = getAPIWindow();
+    if(apiWin){ API12 = apiWin.API || null; API2004 = apiWin.API_1484_11 || null; }
+  }catch(e){}
+
+  var initialized = false, completed = false;
+
+  function scormInit(){
+    try{
+      if(API2004){
+        API2004.Initialize("");
+        if(API2004.GetValue("cmi.completion_status")==="unknown"){ API2004.SetValue("cmi.completion_status","incomplete"); }
+        API2004.Commit("");
+        initialized = true;
+      } else if(API12){
+        API12.LMSInitialize("");
+        API12.LMSSetValue("cmi.core.lesson_status","incomplete");
+        API12.LMSCommit("");
+        initialized = true;
+      }
+    }catch(e){}
+  }
+
+  function scormSetScore(pct){
+    try{
+      if(!initialized) return;
+      if(API2004){ API2004.SetValue("cmi.score.scaled", String(Math.max(0,Math.min(1,pct/100)))); API2004.Commit(""); }
+      else if(API12){ API12.LMSSetValue("cmi.core.score.raw", String(Math.round(pct))); API12.LMSCommit(""); }
+    }catch(e){}
+  }
+
+  function scormComplete(){
+    try{
+      if(!initialized || completed) return;
+      if(API2004){
+        API2004.SetValue("cmi.completion_status","completed");
+        API2004.SetValue("cmi.success_status","passed");
+        API2004.Commit("");
+      } else if(API12){
+        API12.LMSSetValue("cmi.core.lesson_status","completed");
+        API12.LMSCommit("");
+      }
+      completed = true;
+    }catch(e){}
+  }
+
+  function scormFinish(){
+    try{
+      if(!initialized) return;
+      if(API2004) API2004.Terminate("");
+      else if(API12) API12.LMSFinish("");
+    }catch(e){}
+  }
+
+  window.addEventListener('load', scormInit);
+  window.addEventListener('beforeunload', scormFinish);
+
+  // Marca "completado" cuando el estudiante ha verificado al menos 3 ejercicios
+  // en el modo Practicar (cualquier nivel/tema combinado), y reporta el
+  // porcentaje de aciertos acumulado como puntaje. Se apoya en los contadores
+  // ya visibles en pantalla ("Aciertos: X / Y" / "Correct: X / Y") para no
+  // depender de variables internas de la app.
+  var COMPLETION_THRESHOLD = 3;
+
+  function readScoreBadges(){
+    var totalCorrect = 0, totalAttempts = 0;
+    ['scoreBasico','scoreIntermedio','scoreAvanzado'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(!el) return;
+      var m = el.textContent.match(/(\d+)\s*\/\s*(\d+)/);
+      if(m){ totalCorrect += parseInt(m[1],10); totalAttempts += parseInt(m[2],10); }
+    });
+    return { correct: totalCorrect, attempts: totalAttempts };
+  }
+
+  function checkProgress(){
+    var s = readScoreBadges();
+    if(s.attempts > 0){
+      scormSetScore((s.correct / s.attempts) * 100);
+    }
+    if(s.attempts >= COMPLETION_THRESHOLD){
+      scormComplete();
+    }
+  }
+
+  // Engancha la función existente verifyExercise sin modificar su código.
+  function hookVerify(){
+    if(typeof window.verifyExercise === 'function' && !window.verifyExercise.__scormWrapped){
+      var original = window.verifyExercise;
+      var wrapped = function(level){
+        original(level);
+        checkProgress();
+      };
+      wrapped.__scormWrapped = true;
+      window.verifyExercise = wrapped;
+    } else {
+      // La app aún no definió verifyExercise (script en orden de carga); reintenta.
+      setTimeout(hookVerify, 200);
+    }
+  }
+  hookVerify();
+})();
+</script>
 </body>
 </html>
